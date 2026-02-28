@@ -184,9 +184,9 @@
 ## FASE 2 — Data Access Layer + Server Actions + Cart + Auth
 
 ### Task 2.1 — DAL Products
-- [ ] `lib/dal/products.ts`: getProducts({page, perPage, categoryId, search, sortBy, isActive}) → {data, count}, getProductBySlug(slug) → Product con images e variants, getProductById(id), getFeaturedProducts(limit), getRelatedProducts(productId, categoryId, limit), searchProducts(query, limit). OGNI funzione: server client (RLS attiva), return type esplicito, JSDoc
-- [ ] `__tests__/dal/products.test.ts`: mock supabase, testa che le query siano costruite correttamente
-- [ ] **Verifica**: `npx tsc --noEmit && npm run test:run`
+- [x] `lib/dal/products.ts`: getProducts({page, perPage, categoryId, search, sortBy, isActive}) → {data, count}, getProductBySlug(slug) → Product con images e variants, getProductById(id), getFeaturedProducts(limit), getRelatedProducts(productId, categoryId, limit), searchProducts(query, limit). OGNI funzione: server client (RLS attiva), return type esplicito, JSDoc
+- [x] `__tests__/dal/products.test.ts`: mock supabase, testa che le query siano costruite correttamente
+- [x] **Verifica**: `npx tsc --noEmit && npm run test:run`
 
 ### Task 2.2 — Server Actions Products (Admin)
 - [ ] `app/(admin)/admin/products/actions.ts` con `"use server"`: createProduct(formData) con requireAdmin+Zod+slug generation+audit log+revalidatePath, updateProduct(id, formData) con diff audit, deleteProduct(id) soft delete, toggleProductActive(id), updateProductStock(id, quantity), reorderProductImages(productId, imageIds[])
