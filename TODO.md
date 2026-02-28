@@ -256,8 +256,8 @@
 - [x] **Verifica**: `npx tsc --noEmit && npm run test:run`
 
 ### Task 2.13 — KNOWN_ISSUES.md
-- [ ] Crea `KNOWN_ISSUES.md` documentando: rate limiting in-memory (serve Redis), stock decrement non atomico (serve RPC), booking slot race condition (serve lock/transaction), Stripe non integrato, file upload magic bytes base
-- [ ] **Verifica**: file esiste con almeno 5 known issues
+- [x] Crea `KNOWN_ISSUES.md` documentando: rate limiting in-memory (serve Redis), stock decrement non atomico (serve RPC), booking slot race condition (serve lock/transaction), Stripe non integrato, file upload magic bytes base
+- [x] **Verifica**: file esiste con almeno 5 known issues (8 documented)
 
 ### Task 2.14 — Build finale fase 2
 - [ ] `npx tsc --noEmit` — ZERO errori
