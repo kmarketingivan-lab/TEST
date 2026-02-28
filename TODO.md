@@ -14,12 +14,12 @@
 - [x] Committa: `fix(fase7): ecommerce-flow test fix`
 
 ## Task 7.B — Fix test bookings-flow
-- [ ] Apri `__tests__/integration/bookings-flow.test.ts`
-- [ ] 2 test falliscono — errore: `expected { error: 'ID servizio non valido' } to deeply equal { success: true }`
-- [ ] Il mock del servizio non ritorna un ID valido oppure la createBooking action valida l'ID servizio e il mock non lo copre
-- [ ] Fixa i mock per simulare correttamente un servizio esistente
-- [ ] **Verifica**: `npx vitest run __tests__/integration/bookings-flow.test.ts` — 0 fallimenti
-- [ ] Committa: `fix(fase7): bookings-flow test fix`
+- [x] Apri `__tests__/integration/bookings-flow.test.ts`
+- [x] 2 test falliscono — errore: `expected { error: 'ID servizio non valido' } to deeply equal { success: true }`
+- [x] Il mock del servizio non ritorna un ID valido oppure la createBooking action valida l'ID servizio e il mock non lo copre
+- [x] Fixa i mock per simulare correttamente un servizio esistente
+- [x] **Verifica**: `npx vitest run __tests__/integration/bookings-flow.test.ts` — 0 fallimenti
+- [x] Committa: `fix(fase7): bookings-flow test fix`
 
 ## Task 7.C — Build finale completo
 - [ ] `npx tsc --noEmit` — ZERO errori
