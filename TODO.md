@@ -6,12 +6,12 @@
 ---
 
 ## Task 7.A — Fix test ecommerce-flow
-- [ ] Apri `__tests__/integration/ecommerce-flow.test.ts`
-- [ ] Il test che fallisce è probabilmente relativo all'order_number o al checkout flow
-- [ ] Esegui `npx vitest run __tests__/integration/ecommerce-flow.test.ts` per vedere l'errore esatto
-- [ ] Fixa il test (il mock potrebbe non corrispondere alla firma reale della funzione)
-- [ ] **Verifica**: `npx vitest run __tests__/integration/ecommerce-flow.test.ts` — 0 fallimenti
-- [ ] Committa: `fix(fase7): ecommerce-flow test fix`
+- [x] Apri `__tests__/integration/ecommerce-flow.test.ts`
+- [x] Il test che fallisce è probabilmente relativo all'order_number o al checkout flow
+- [x] Esegui `npx vitest run __tests__/integration/ecommerce-flow.test.ts` per vedere l'errore esatto
+- [x] Fixa il test (il mock potrebbe non corrispondere alla firma reale della funzione)
+- [x] **Verifica**: `npx vitest run __tests__/integration/ecommerce-flow.test.ts` — 0 fallimenti
+- [x] Committa: `fix(fase7): ecommerce-flow test fix`
 
 ## Task 7.B — Fix test bookings-flow
 - [ ] Apri `__tests__/integration/bookings-flow.test.ts`
