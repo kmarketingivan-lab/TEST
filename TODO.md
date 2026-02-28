@@ -177,8 +177,8 @@
 - [x] **Verifica**: `npx tsc --noEmit`
 
 ### Task 1.13 — Types Database completo
-- [ ] Aggiorna `types/database.ts` con TUTTE le tabelle: tipo Database con public.Tables per ogni tabella (Row, Insert, Update). Esporta tipi: Product, Category, Order, OrderItem, BlogPost, Page, Booking, BookingService, Media, Profile, SiteSetting, AuditLog
-- [ ] **Verifica**: `npx tsc --noEmit` — ZERO errori, ogni tipo usato nei validators senza cast
+- [x] Aggiorna `types/database.ts` con TUTTE le tabelle: tipo Database con public.Tables per ogni tabella (Row, Insert, Update). Esporta tipi: Product, Category, Order, OrderItem, BlogPost, Page, Booking, BookingService, Media, Profile, SiteSetting, AuditLog
+- [x] **Verifica**: `npx tsc --noEmit` — ZERO errori, ogni tipo usato nei validators senza cast
 ---
 
 ## FASE 2 — Data Access Layer + Server Actions + Cart + Auth
