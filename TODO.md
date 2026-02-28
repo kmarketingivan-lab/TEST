@@ -88,9 +88,9 @@
 - [x] **Verifica**: `npx tsc --noEmit && npm run test:run` — zero errori
 
 ### Task 0.5 — Middleware sicurezza
-- [ ] `middleware.ts` nella root con: refresh sessione Supabase, security headers (X-Frame-Options: DENY, X-Content-Type-Options: nosniff, Referrer-Policy: strict-origin-when-cross-origin, Permissions-Policy, X-XSS-Protection, Strict-Transport-Security), protezione /admin/* con verifica auth + ruolo admin, CSP header
-- [ ] `config.matcher` che esclude _next/static, _next/image, favicon.ico
-- [ ] **Verifica**: `npx tsc --noEmit` — zero errori
+- [x] `middleware.ts` nella root con: refresh sessione Supabase, security headers (X-Frame-Options: DENY, X-Content-Type-Options: nosniff, Referrer-Policy: strict-origin-when-cross-origin, Permissions-Policy, X-XSS-Protection, Strict-Transport-Security), protezione /admin/* con verifica auth + ruolo admin, CSP header
+- [x] `config.matcher` che esclude _next/static, _next/image, favicon.ico
+- [x] **Verifica**: `npx tsc --noEmit` — zero errori
 
 ### Task 0.6 — Layout shells (placeholder vuoti)
 - [ ] `app/layout.tsx` — root layout con html lang="it"
