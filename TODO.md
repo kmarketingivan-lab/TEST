@@ -45,13 +45,13 @@
 - [x] **Verifica**: `npx tsc --noEmit && npm run build`
 
 ### Task 3.4 — Feedback components
-- [ ] `components/ui/toast.tsx`: Sistema toast notifications — success, error, warning, info. Auto-dismiss dopo 5s. Stack multipli. Posizione top-right. Context provider + hook useToast()
-- [ ] `components/ui/modal.tsx`: Modal/Dialog con overlay, close button, title, content, footer con actions. Trap focus, close su Escape, close su click overlay
-- [ ] `components/ui/confirm-dialog.tsx`: Dialog di conferma riutilizzabile — "Sei sicuro?" con azione e cancel. Variante danger per delete
-- [ ] `components/ui/alert.tsx`: Alert banner inline — success, error, warning, info
-- [ ] `components/ui/badge.tsx`: Badge per status (colori per: active/published=green, draft/pending=yellow, cancelled/inactive=red, ecc.)
-- [ ] `components/ui/skeleton.tsx`: Skeleton loader per cards, righe tabella, form fields
-- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
+- [x] `components/ui/toast.tsx`: Sistema toast notifications — success, error, warning, info. Auto-dismiss dopo 5s. Stack multipli. Posizione top-right. Context provider + hook useToast()
+- [x] `components/ui/modal.tsx`: Modal/Dialog con overlay, close button, title, content, footer con actions. Trap focus, close su Escape, close su click overlay
+- [x] `components/ui/confirm-dialog.tsx`: Dialog di conferma riutilizzabile — "Sei sicuro?" con azione e cancel. Variante danger per delete
+- [x] `components/ui/alert.tsx`: Alert banner inline — success, error, warning, info
+- [x] `components/ui/badge.tsx`: Badge per status (colori per: active/published=green, draft/pending=yellow, cancelled/inactive=red, ecc.)
+- [x] `components/ui/skeleton.tsx`: Skeleton loader per cards, righe tabella, form fields
+- [x] **Verifica**: `npx tsc --noEmit && npm run build`
 
 ### Task 3.5 — Rich Text Editor
 - [ ] Installa `@tiptap/react`, `@tiptap/starter-kit`, `@tiptap/extension-image`, `@tiptap/extension-link`
