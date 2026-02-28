@@ -60,9 +60,9 @@
 - [x] **Verifica**: `npx tsc --noEmit && npm run build`
 
 ### Task 3.6 — Media Picker
-- [ ] `components/ui/media-picker.tsx`: Modal per selezionare media dalla libreria. Griglia di thumbnail, ricerca per nome, filtro per folder, upload diretto. Ritorna URL del media selezionato. Props: onSelect(url), accept (image/*, application/pdf)
-- [ ] `components/ui/image-upload.tsx`: Drop zone per upload diretto. Preview, progress bar, validazione client-side (tipo, dimensione). Usa media server action
-- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
+- [x] `components/ui/media-picker.tsx`: Modal per selezionare media dalla libreria. Griglia di thumbnail, ricerca per nome, filtro per folder, upload diretto. Ritorna URL del media selezionato. Props: onSelect(url), accept (image/*, application/pdf)
+- [x] `components/ui/image-upload.tsx`: Drop zone per upload diretto. Preview, progress bar, validazione client-side (tipo, dimensione). Usa media server action
+- [x] **Verifica**: `npx tsc --noEmit && npm run build`
 ---
 
 ## FASE 4 — Admin Pages (CRUD completo)
