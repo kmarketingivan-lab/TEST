@@ -79,13 +79,13 @@
 - [x] **Verifica**: `npm run test:run` — esegue, 0 test, 0 errori
 
 ### Task 0.4 — Utilities condivise
-- [ ] `lib/utils/logger.ts`: Logger strutturato — NO console.log nel codebase. Metodi: info, error, warn
-- [ ] `lib/utils/slugify.ts`: wrapper di slugify con opzioni italiane (rimuovi accenti)
-- [ ] `lib/utils/sanitize.ts`: wrapper DOMPurify per sanitizzare rich HTML
-- [ ] `lib/utils/errors.ts`: classi AppError, ValidationError, AuthError, NotFoundError con code, message, status
-- [ ] `lib/utils/audit.ts`: funzione `logAuditEvent(userId, action, entityType, entityId, oldValues?, newValues?)` che scrive in audit_log via admin client
-- [ ] Test per slugify e sanitize
-- [ ] **Verifica**: `npx tsc --noEmit && npm run test:run` — zero errori
+- [x] `lib/utils/logger.ts`: Logger strutturato — NO console.log nel codebase. Metodi: info, error, warn
+- [x] `lib/utils/slugify.ts`: wrapper di slugify con opzioni italiane (rimuovi accenti)
+- [x] `lib/utils/sanitize.ts`: wrapper DOMPurify per sanitizzare rich HTML
+- [x] `lib/utils/errors.ts`: classi AppError, ValidationError, AuthError, NotFoundError con code, message, status
+- [x] `lib/utils/audit.ts`: funzione `logAuditEvent(userId, action, entityType, entityId, oldValues?, newValues?)` che scrive in audit_log via admin client
+- [x] Test per slugify e sanitize
+- [x] **Verifica**: `npx tsc --noEmit && npm run test:run` — zero errori
 
 ### Task 0.5 — Middleware sicurezza
 - [ ] `middleware.ts` nella root con: refresh sessione Supabase, security headers (X-Frame-Options: DENY, X-Content-Type-Options: nosniff, Referrer-Policy: strict-origin-when-cross-origin, Permissions-Policy, X-XSS-Protection, Strict-Transport-Security), protezione /admin/* con verifica auth + ruolo admin, CSP header
