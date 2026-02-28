@@ -245,10 +245,10 @@
 - [x] **Verifica**: `npx tsc --noEmit && npm run test:run`
 
 ### Task 2.11 — Auth helpers + actions
-- [ ] `lib/auth/helpers.ts`: getCurrentUser()→{id,email,role}|null, requireAuth()→redirect se non autenticato, requireAdmin()→redirect se non admin, isAdmin(userId)→boolean
-- [ ] `lib/auth/actions.ts` con `"use server"`: signIn(formData), signUp(formData), signOut(), resetPassword(formData), updatePassword(formData). Rate limiting su signIn: max 5/15min per email (in-memory Map — documentare in KNOWN_ISSUES che serve Redis in produzione)
-- [ ] `__tests__/auth/helpers.test.ts`: mock session, requireAuth con/senza user, requireAdmin con/senza ruolo
-- [ ] **Verifica**: `npx tsc --noEmit && npm run test:run`
+- [x] `lib/auth/helpers.ts`: getCurrentUser()→{id,email,role}|null, requireAuth()→redirect se non autenticato, requireAdmin()→redirect se non admin, isAdmin(userId)→boolean
+- [x] `lib/auth/actions.ts` con `"use server"`: signIn(formData), signUp(formData), signOut(), resetPassword(formData), updatePassword(formData). Rate limiting su signIn: max 5/15min per email (in-memory Map — documentare in KNOWN_ISSUES che serve Redis in produzione)
+- [x] `__tests__/auth/helpers.test.ts`: mock session, requireAuth con/senza user, requireAdmin con/senza ruolo
+- [x] **Verifica**: `npx tsc --noEmit && npm run test:run`
 
 ### Task 2.12 — Checkout action
 - [ ] `lib/checkout/actions.ts` con `"use server"`: createOrder(formData) che: 1) Zod validation 2) getCart() verifica non vuoto 3) calculateTotals() prezzi freschi dal DB 4) verifica stock per ogni item 5) genera order_number 6) insert ordine+items 7) decrementa stock (documentare: NON atomico senza DB function RPC) 8) clearCart() 9) return {success, orderNumber} o {error}
