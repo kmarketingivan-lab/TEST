@@ -108,11 +108,11 @@
 > Per ogni task: 1) Migration SQL in `supabase/migrations/XXXX_nome.sql` 2) RLS policies nella stessa migration 3) Zod schema in `lib/validators/` 4) Types in `types/database.ts` 5) Test Zod in `__tests__/validators/`
 
 ### Task 1.1 — profiles
-- [ ] Migration `supabase/migrations/0001_profiles.sql`: tabella profiles (id UUID PK ref auth.users CASCADE, role TEXT CHECK admin/customer DEFAULT customer, full_name, phone, avatar_url, timestamps). RLS: users leggono solo proprio profilo, admin legge tutti, users aggiornano solo proprio profilo MA NON il campo role (WITH CHECK), trigger on_auth_user_created che crea profilo automaticamente (SECURITY DEFINER)
-- [ ] `lib/validators/profile.ts`: Zod schema — role enum, full_name min 2 chars, phone opzionale regex
-- [ ] Types in `types/database.ts`
-- [ ] `__tests__/validators/profile.test.ts`: validi passano, invalidi (role: "superadmin", name: "", phone: "abc") falliscono
-- [ ] **Verifica**: `npx tsc --noEmit && npm run test:run`
+- [x] Migration `supabase/migrations/0001_profiles.sql`: tabella profiles (id UUID PK ref auth.users CASCADE, role TEXT CHECK admin/customer DEFAULT customer, full_name, phone, avatar_url, timestamps). RLS: users leggono solo proprio profilo, admin legge tutti, users aggiornano solo proprio profilo MA NON il campo role (WITH CHECK), trigger on_auth_user_created che crea profilo automaticamente (SECURITY DEFINER)
+- [x] `lib/validators/profile.ts`: Zod schema — role enum, full_name min 2 chars, phone opzionale regex
+- [x] Types in `types/database.ts`
+- [x] `__tests__/validators/profile.test.ts`: validi passano, invalidi (role: "superadmin", name: "", phone: "abc") falliscono
+- [x] **Verifica**: `npx tsc --noEmit && npm run test:run`
 
 ### Task 1.2 — categories
 - [ ] Migration `supabase/migrations/0002_categories.sql`: tabella (id UUID, name, slug UNIQUE, description, image_url, parent_id self-ref, sort_order, is_active, timestamps). Indici su slug e parent_id. RLS: SELECT pubblico (is_active=true), INSERT/UPDATE/DELETE solo admin
