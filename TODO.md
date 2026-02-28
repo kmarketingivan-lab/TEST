@@ -121,10 +121,10 @@
 - [x] **Verifica**: `npx tsc --noEmit && npm run test:run`
 
 ### Task 1.3 — products
-- [ ] Migration `supabase/migrations/0003_products.sql`: tabella (id, name, slug UNIQUE, description, rich_description, price NUMERIC(10,2) CHECK>=0, compare_at_price, cost_price, sku UNIQUE, barcode, stock_quantity CHECK>=0, low_stock_threshold, weight_grams, category_id FK, is_active, is_featured, seo_title, seo_description, timestamps). Indici: slug, category_id, is_active, (is_featured+is_active). RLS: SELECT pubblico (is_active=true), resto admin
-- [ ] `lib/validators/products.ts`: price positivo, slug regex, name min 2, stock integer non negativo
-- [ ] Types, test Zod con edge: price=0 (valido), price=-1 (invalido), slug con spazi (invalido)
-- [ ] **Verifica**: `npx tsc --noEmit && npm run test:run`
+- [x] Migration `supabase/migrations/0003_products.sql`: tabella (id, name, slug UNIQUE, description, rich_description, price NUMERIC(10,2) CHECK>=0, compare_at_price, cost_price, sku UNIQUE, barcode, stock_quantity CHECK>=0, low_stock_threshold, weight_grams, category_id FK, is_active, is_featured, seo_title, seo_description, timestamps). Indici: slug, category_id, is_active, (is_featured+is_active). RLS: SELECT pubblico (is_active=true), resto admin
+- [x] `lib/validators/products.ts`: price positivo, slug regex, name min 2, stock integer non negativo
+- [x] Types, test Zod con edge: price=0 (valido), price=-1 (invalido), slug con spazi (invalido)
+- [x] **Verifica**: `npx tsc --noEmit && npm run test:run`
 
 ### Task 1.4 — product_images
 - [ ] Migration `supabase/migrations/0004_product_images.sql`: tabella (id, product_id FK CASCADE, url, alt_text, sort_order, is_primary, created_at). Indice su product_id. RLS: SELECT pubblico, INSERT/UPDATE/DELETE admin
