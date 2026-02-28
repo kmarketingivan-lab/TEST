@@ -166,28 +166,28 @@
 ## FASE 6 — Security Hardening
 
 ### Task 6.1 — Input validation audit
-- [ ] Verifica OGNI server action: Zod validation è il PRIMO step dopo requireAdmin/requireAuth
-- [ ] Verifica OGNI form: validazione client-side con Zod prima del submit
-- [ ] Verifica rich_content: sanitizzato con DOMPurify PRIMA di salvare e PRIMA di renderizzare
-- [ ] Verifica slug generation: nessun carattere speciale, nessuna injection possibile
-- [ ] Se trovi violazioni, fixale. Documenta in SECURITY_AUDIT.md
-- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
+- [x] Verifica OGNI server action: Zod validation è il PRIMO step dopo requireAdmin/requireAuth
+- [x] Verifica OGNI form: validazione client-side con Zod prima del submit
+- [x] Verifica rich_content: sanitizzato con DOMPurify PRIMA di salvare e PRIMA di renderizzare
+- [x] Verifica slug generation: nessun carattere speciale, nessuna injection possibile
+- [x] Se trovi violazioni, fixale. Documenta in SECURITY_AUDIT.md
+- [x] **Verifica**: `npx tsc --noEmit && npm run build`
 
 ### Task 6.2 — Security headers audit
-- [ ] Verifica middleware.ts: tutti gli headers security presenti (X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, X-XSS-Protection, Strict-Transport-Security, Content-Security-Policy)
-- [ ] CSP: restrittiva ma funzionale (script-src 'self', style-src 'self' 'unsafe-inline' per Tailwind, img-src 'self' + Supabase storage URL, connect-src 'self' + Supabase URL)
-- [ ] Verifica: nessuna pagina admin accessibile senza auth
-- [ ] Verifica: nessuna API route espone dati senza auth dove richiesto
-- [ ] Documenta in SECURITY_AUDIT.md
-- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
+- [x] Verifica middleware.ts: tutti gli headers security presenti (X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, X-XSS-Protection, Strict-Transport-Security, Content-Security-Policy)
+- [x] CSP: restrittiva ma funzionale (script-src 'self', style-src 'self' 'unsafe-inline' per Tailwind, img-src 'self' + Supabase storage URL, connect-src 'self' + Supabase URL)
+- [x] Verifica: nessuna pagina admin accessibile senza auth
+- [x] Verifica: nessuna API route espone dati senza auth dove richiesto
+- [x] Documenta in SECURITY_AUDIT.md
+- [x] **Verifica**: `npx tsc --noEmit && npm run build`
 
 ### Task 6.3 — Error handling audit
-- [ ] Verifica: NESSUNA server action espone stack traces o messaggi interni
-- [ ] Verifica: app/error.tsx cattura errori e mostra messaggio generico
-- [ ] Verifica: OGNI form mostra errore utente-friendly, non errore tecnico
-- [ ] Verifica: 404 page funziona per route inesistenti
-- [ ] Documenta in SECURITY_AUDIT.md
-- [ ] **Verifica**: `npm run build`
+- [x] Verifica: NESSUNA server action espone stack traces o messaggi interni
+- [x] Verifica: app/error.tsx cattura errori e mostra messaggio generico
+- [x] Verifica: OGNI form mostra errore utente-friendly, non errore tecnico
+- [x] Verifica: 404 page funziona per route inesistenti
+- [x] Documenta in SECURITY_AUDIT.md
+- [x] **Verifica**: `npm run build`
 
 ---
 
