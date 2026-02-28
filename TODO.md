@@ -70,8 +70,8 @@
 > Ogni pagina admin: server component con requireAdmin(), carica dati dal DAL, passa a client components per interattività.
 
 ### Task 4.1 — Dashboard admin
-- [ ] `app/(admin)/admin/page.tsx`: Dashboard con cards riassuntive: totale ordini (per status), totale prodotti attivi, prenotazioni oggi/settimana, ultime 5 orders, ultimi 5 audit log. Dati dal DAL, layout a griglia responsive
-- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
+- [x] `app/(admin)/admin/page.tsx`: Dashboard con cards riassuntive: totale ordini (per status), totale prodotti attivi, prenotazioni oggi/settimana, ultime 5 orders, ultimi 5 audit log. Dati dal DAL, layout a griglia responsive
+- [x] **Verifica**: `npx tsc --noEmit && npm run build`
 
 ### Task 4.2 — Products CRUD
 - [ ] `app/(admin)/admin/products/page.tsx`: Lista prodotti con DataTable — colonne: immagine thumbnail, nome, SKU, prezzo, stock, status badge, azioni (edit, toggle active, delete). Paginazione server-side. Filtro per categoria, ricerca per nome/SKU
