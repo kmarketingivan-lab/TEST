@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ResetPasswordForm } from "./reset-password-form";
 
 export default function ResetPasswordPage() {
@@ -11,9 +12,9 @@ export default function ResetPasswordPage() {
         <ResetPasswordForm />
       </div>
       <p className="mt-6 text-center text-sm text-gray-500">
-        <a href="/auth/login" className="font-medium text-blue-600 hover:text-blue-700">
+        <Link href="/auth/login" className="font-medium text-blue-600 hover:text-blue-700">
           Torna al login
-        </a>
+        </Link>
       </p>
     </div>
   );

@@ -22,10 +22,10 @@
 - [x] Committa: `fix(fase7): bookings-flow test fix`
 
 ## Task 7.C — Build finale completo
-- [ ] `npx tsc --noEmit` — ZERO errori
-- [ ] `npx next lint` — ZERO errori (o solo warning non bloccanti)
-- [ ] `npm run build` — ZERO errori
-- [ ] `npm run test:run` — ZERO fallimenti, tutti i 178 test passano
-- [ ] Verifica che SECURITY_AUDIT.md esista
-- [ ] Committa: `chore: phase 2 complete — all checks green`
-- [ ] **Verifica**: tutti i comandi passano
+- [x] `npx tsc --noEmit` — ZERO errori
+- [x] `npx next lint` — ZERO errori (o solo warning non bloccanti)
+- [x] `npm run build` — ZERO errori
+- [x] `npm run test:run` — ZERO fallimenti, tutti i 178 test passano
+- [x] Verifica che SECURITY_AUDIT.md esista
+- [x] Committa: `chore: phase 2 complete — all checks green`
+- [x] **Verifica**: tutti i comandi passano

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { RegisterForm } from "./register-form";
 
 export default function RegisterPage() {
@@ -12,9 +13,9 @@ export default function RegisterPage() {
       </div>
       <p className="mt-6 text-center text-sm text-gray-500">
         Hai già un account?{" "}
-        <a href="/auth/login" className="font-medium text-blue-600 hover:text-blue-700">
+        <Link href="/auth/login" className="font-medium text-blue-600 hover:text-blue-700">
           Accedi
-        </a>
+        </Link>
       </p>
     </div>
   );

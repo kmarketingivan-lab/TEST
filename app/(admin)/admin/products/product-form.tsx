@@ -8,7 +8,6 @@ import { Select } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
-import { ImageUpload } from "@/components/ui/image-upload";
 import { useToast } from "@/components/ui/toast";
 import { slugify } from "@/lib/utils/slugify";
 import type { Product, Category } from "@/types/database";

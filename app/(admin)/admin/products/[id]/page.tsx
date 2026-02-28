@@ -1,6 +1,6 @@
 import { requireAdmin } from "@/lib/auth/helpers";
 import { getProductById } from "@/lib/dal/products";
-import { Badge, getStatusVariant } from "@/components/ui/badge";
+import { Badge } from "@/components/ui/badge";
 import { RichTextDisplay } from "@/components/ui/rich-text-display";
 import { notFound } from "next/navigation";
 import Link from "next/link";

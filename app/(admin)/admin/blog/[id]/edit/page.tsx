@@ -1,5 +1,4 @@
 import { requireAdmin } from "@/lib/auth/helpers";
-import { getPostBySlug } from "@/lib/dal/blog";
 import { createClient } from "@/lib/supabase/server";
 import { BlogForm } from "../../blog-form";
 import { updatePost } from "../../actions";

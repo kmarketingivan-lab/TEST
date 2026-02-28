@@ -1,6 +1,7 @@
 import { requireAdmin } from "@/lib/auth/helpers";
 import { getPosts } from "@/lib/dal/blog";
 import { BlogTable } from "./blog-table";
+import Link from "next/link";
 
 export default async function AdminBlogPage() {
   await requireAdmin();
@@ -10,9 +11,9 @@ export default async function AdminBlogPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Blog</h1>
-        <a href="/admin/blog/new" className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+        <Link href="/admin/blog/new" className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
           Nuovo post
-        </a>
+        </Link>
       </div>
       <BlogTable posts={result.data} />
     </div>

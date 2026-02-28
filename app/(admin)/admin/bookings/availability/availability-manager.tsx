@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -21,7 +21,7 @@ function AvailabilityManager({ availability, dayNames }: AvailabilityManagerProp
 
   const getForDay = (day: number) => availability.find((a) => a.day_of_week === day);
 
-  const handleSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     const formData = new FormData(e.currentTarget);
@@ -57,7 +57,7 @@ function AvailabilityManager({ availability, dayNames }: AvailabilityManagerProp
       addToast("success", "Disponibilità aggiornata");
       router.refresh();
     }
-  }, [addToast, router, availability]);
+  };
 
   return (
     <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
