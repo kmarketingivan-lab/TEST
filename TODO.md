@@ -30,14 +30,14 @@
 - [x] Tutti i componenti usano Tailwind, sono client components dove serve (onChange), hanno props tipizzate
 - [x] **Verifica**: `npx tsc --noEmit && npm run build`
 ### Task 3.2 — Layout components
-- [ ] `components/layout/admin-sidebar.tsx`: Sidebar navigazione admin con link a: Dashboard, Prodotti, Categorie, Ordini, Prenotazioni, Blog, Pagine, Media, Impostazioni. Icone con Lucide React. Active state basato su pathname. Collapsibile su mobile
-- [ ] `components/layout/admin-header.tsx`: Header admin con breadcrumb, nome utente, logout button
-- [ ] `components/layout/admin-shell.tsx`: Layout completo admin = sidebar + header + main content area
-- [ ] `components/layout/storefront-header.tsx`: Header pubblico con logo, nav (Home, Catalogo, Blog, Prenotazioni, Contatti), cart icon con counter, login/account link
-- [ ] `components/layout/storefront-footer.tsx`: Footer con info contatto da site_settings, link utili, copyright
-- [ ] Aggiorna `app/(admin)/layout.tsx` per usare admin-shell con auth check
-- [ ] Aggiorna `app/(storefront)/layout.tsx` per usare storefront header+footer
-- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
+- [x] `components/layout/admin-sidebar.tsx`: Sidebar navigazione admin con link a: Dashboard, Prodotti, Categorie, Ordini, Prenotazioni, Blog, Pagine, Media, Impostazioni. Icone con Lucide React. Active state basato su pathname. Collapsibile su mobile
+- [x] `components/layout/admin-header.tsx`: Header admin con breadcrumb, nome utente, logout button
+- [x] `components/layout/admin-shell.tsx`: Layout completo admin = sidebar + header + main content area
+- [x] `components/layout/storefront-header.tsx`: Header pubblico con logo, nav (Home, Catalogo, Blog, Prenotazioni, Contatti), cart icon con counter, login/account link
+- [x] `components/layout/storefront-footer.tsx`: Footer con info contatto da site_settings, link utili, copyright
+- [x] Aggiorna `app/(admin)/layout.tsx` per usare admin-shell con auth check
+- [x] Aggiorna `app/(storefront)/layout.tsx` per usare storefront header+footer
+- [x] **Verifica**: `npx tsc --noEmit && npm run build`
 
 ### Task 3.3 — DataTable component
 - [ ] `components/ui/data-table.tsx`: Tabella riutilizzabile con: colonne configurabili (header, accessor, render function), sorting (client-side), paginazione (pagina corrente, per page, totale), selezione righe con checkbox, azioni per riga (dropdown menu), empty state, loading state (skeleton), responsive (scroll orizzontale su mobile)
