@@ -251,9 +251,9 @@
 - [x] **Verifica**: `npx tsc --noEmit && npm run test:run`
 
 ### Task 2.12 — Checkout action
-- [ ] `lib/checkout/actions.ts` con `"use server"`: createOrder(formData) che: 1) Zod validation 2) getCart() verifica non vuoto 3) calculateTotals() prezzi freschi dal DB 4) verifica stock per ogni item 5) genera order_number 6) insert ordine+items 7) decrementa stock (documentare: NON atomico senza DB function RPC) 8) clearCart() 9) return {success, orderNumber} o {error}
-- [ ] Test con mock
-- [ ] **Verifica**: `npx tsc --noEmit && npm run test:run`
+- [x] `lib/checkout/actions.ts` con `"use server"`: createOrder(formData) che: 1) Zod validation 2) getCart() verifica non vuoto 3) calculateTotals() prezzi freschi dal DB 4) verifica stock per ogni item 5) genera order_number 6) insert ordine+items 7) decrementa stock (documentare: NON atomico senza DB function RPC) 8) clearCart() 9) return {success, orderNumber} o {error}
+- [x] Test con mock
+- [x] **Verifica**: `npx tsc --noEmit && npm run test:run`
 
 ### Task 2.13 — KNOWN_ISSUES.md
 - [ ] Crea `KNOWN_ISSUES.md` documentando: rate limiting in-memory (serve Redis), stock decrement non atomico (serve RPC), booking slot race condition (serve lock/transaction), Stripe non integrato, file upload magic bytes base
