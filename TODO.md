@@ -1,270 +1,217 @@
-# PRD FASE 1 — Infrastruttura, Database, Data Access Layer
+# PRD FASE 2 — UI Components, Admin Panel, Storefront, Security, Tests
 
-> **Run notturna #1**: Setup progetto, schema DB completo con RLS, Zod schemas, DAL, Server Actions, Cart logic, Auth.
-> **Stack**: Next.js 14 (App Router) + Supabase + TypeScript strict
-> **Obiettivo**: Base solida e verificabile. ZERO UI, ZERO pagine. Solo backend e logica.
+> **Run notturna #2**: Componenti UI, pagine admin CRUD, storefront pubblico, security hardening, test integrazione.
+> **Prerequisiti**: Phase 1 completata e verificata. Build/TSC/Test tutti verdi.
+> **Obiettivo**: Interfaccia admin funzionale + storefront navigabile. Design minimale ma usabile.
 
 ---
 
-## Architettura
-
-```
-/app
-  /(storefront)/layout.tsx   → Layout placeholder (solo shell vuota)
-  /(admin)/layout.tsx        → Layout placeholder (solo shell vuota)
-  /api                       → Route handlers (vuoti per ora)
-/lib
-  /supabase                  → Client, types, helpers
-  /validators                → Zod schemas (uno per tabella)
-  /dal                       → Data Access Layer (query functions)
-  /auth                      → Auth helpers + actions
-  /cart                      → Cart logic server-side
-  /utils                     → Helpers puri (slugify, sanitize, audit log)
-/types                       → TypeScript types globali
-/middleware.ts               → Auth + security middleware
-/supabase
-  /migrations                → SQL migrations numerate
-  /seed.sql                  → Dati di test
-/__tests__
-  /validators                → Test per ogni Zod schema
-  /dal                       → Test per DAL (con mock Supabase)
-  /cart                      → Test cart logic
-  /auth                      → Test auth helpers
-```
-### Convenzioni obbligatorie
+## Convenzioni (stesse della Fase 1)
 
 - TypeScript `strict: true` — ZERO `any`, ZERO `@ts-ignore`
-- Ogni funzione pubblica ha JSDoc con @param e @returns
-- Ogni tabella DB ha: migration SQL, RLS policies, Zod schema, TypeScript type
-- Tutti gli input validati server-side con Zod PRIMA di toccare il DB
-- Server actions: `"use server"` → Zod validation → auth check → operazione → audit log → revalidate
-- Nessun `console.log` — usa un helper `logger` strutturato
-- Error handling: OGNI server action wrappata in try/catch, errori tipizzati, MAI esporre stack traces
-
-### Regole di sicurezza
-
-- RLS attiva su OGNI tabella, NESSUNA eccezione
-- Admin check su OGNI server action admin (non fidarsi solo del middleware)
-- Service role client SOLO in `lib/supabase/admin.ts`, MAI importato in file client
-- Input validation doppia: Zod schema + constraint SQL (belt and suspenders)
-- File upload: whitelist MIME, max size, filename sanitization con nanoid
-- Cart: cookie firmato HMAC, prezzi SEMPRE riletti dal DB al checkout
-- Auth: rate limiting su login, token solo httpOnly cookies
+- ZERO `console.log` — usa `logger`
+- Ogni componente React: props tipizzate, JSDoc
+- Ogni form: validazione client-side con Zod + server action con validazione server-side
+- Ogni pagina admin: requireAdmin() nel server component
+- Gestione errori: try/catch, feedback utente chiaro, MAI stack traces
+- Accessibilità base: label su ogni input, aria-label dove serve, focus management
 
 ---
 
-## FASE 0 — Setup Progetto
+## FASE 3 — UI Components (componenti riutilizzabili)
 
-### Task 0.1 — Init Next.js + TypeScript strict
-- [x] `npx create-next-app@latest --typescript --tailwind --eslint --app --src-dir=false`
-- [x] `tsconfig.json`: `strict: true`, `noUncheckedIndexedAccess: true`, `exactOptionalPropertyTypes: true`
-- [x] ESLint: `@typescript-eslint/no-explicit-any: error`, `@typescript-eslint/no-unused-vars: error`
-- [x] `.env.local.example` con: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, HMAC_SECRET
-- [x] `.gitignore` include `.env.local`
-- [x] **Verifica**: `npx tsc --noEmit && npx next lint` — zero errori
-### Task 0.2 — Supabase clients
-- [x] `npm install @supabase/supabase-js @supabase/ssr`
-- [x] `lib/supabase/client.ts`: Browser client con ANON key, RLS attiva, tipizzato con Database
-- [x] `lib/supabase/server.ts`: Server client che legge cookies, RLS attiva, tipizzato
-- [x] `lib/supabase/admin.ts`: Service role client — BYPASSA RLS — SOLO server-side, MAI esposto. Commento ⚠️ in testa al file
-- [x] `lib/supabase/middleware.ts`: helper per refresh session nel middleware
-- [x] `types/database.ts`: tipo Database placeholder (verrà popolato con le tabelle)
-- [x] **Verifica**: `npx tsc --noEmit` — zero errori
+### Task 3.1 — Form components base
+- [ ] `components/ui/input.tsx`: Input con label, error message, forwarded ref, varianti (text, email, number, password, search). Props: label, error, description, required
+- [ ] `components/ui/textarea.tsx`: Textarea con label, error, character count opzionale
+- [ ] `components/ui/select.tsx`: Select nativo con label, error, options array
+- [ ] `components/ui/checkbox.tsx`: Checkbox con label
+- [ ] `components/ui/button.tsx`: Button con varianti (primary, secondary, danger, ghost), sizes (sm, md, lg), loading state con spinner, disabled
+- [ ] `components/ui/form-field.tsx`: Wrapper che compone label + input + error message
+- [ ] Tutti i componenti usano Tailwind, sono client components dove serve (onChange), hanno props tipizzate
+- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
+### Task 3.2 — Layout components
+- [ ] `components/layout/admin-sidebar.tsx`: Sidebar navigazione admin con link a: Dashboard, Prodotti, Categorie, Ordini, Prenotazioni, Blog, Pagine, Media, Impostazioni. Icone con Lucide React. Active state basato su pathname. Collapsibile su mobile
+- [ ] `components/layout/admin-header.tsx`: Header admin con breadcrumb, nome utente, logout button
+- [ ] `components/layout/admin-shell.tsx`: Layout completo admin = sidebar + header + main content area
+- [ ] `components/layout/storefront-header.tsx`: Header pubblico con logo, nav (Home, Catalogo, Blog, Prenotazioni, Contatti), cart icon con counter, login/account link
+- [ ] `components/layout/storefront-footer.tsx`: Footer con info contatto da site_settings, link utili, copyright
+- [ ] Aggiorna `app/(admin)/layout.tsx` per usare admin-shell con auth check
+- [ ] Aggiorna `app/(storefront)/layout.tsx` per usare storefront header+footer
+- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
 
-### Task 0.3 — Dipendenze
-- [x] Runtime: `zod`, `isomorphic-dompurify`, `date-fns`, `slugify`, `nanoid`
-- [x] Dev: `vitest`, `@testing-library/react`, `@testing-library/jest-dom`
-- [x] `vitest.config.ts` con path aliases che matchano tsconfig
-- [x] Scripts npm: `"test": "vitest"`, `"test:run": "vitest run"`, `"test:coverage": "vitest run --coverage"`
-- [x] **Verifica**: `npm run test:run` — esegue, 0 test, 0 errori
+### Task 3.3 — DataTable component
+- [ ] `components/ui/data-table.tsx`: Tabella riutilizzabile con: colonne configurabili (header, accessor, render function), sorting (client-side), paginazione (pagina corrente, per page, totale), selezione righe con checkbox, azioni per riga (dropdown menu), empty state, loading state (skeleton), responsive (scroll orizzontale su mobile)
+- [ ] Props tipizzate con generics: `DataTable<T>` dove T è il tipo dei dati
+- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
 
-### Task 0.4 — Utilities condivise
-- [x] `lib/utils/logger.ts`: Logger strutturato — NO console.log nel codebase. Metodi: info, error, warn
-- [x] `lib/utils/slugify.ts`: wrapper di slugify con opzioni italiane (rimuovi accenti)
-- [x] `lib/utils/sanitize.ts`: wrapper DOMPurify per sanitizzare rich HTML
-- [x] `lib/utils/errors.ts`: classi AppError, ValidationError, AuthError, NotFoundError con code, message, status
-- [x] `lib/utils/audit.ts`: funzione `logAuditEvent(userId, action, entityType, entityId, oldValues?, newValues?)` che scrive in audit_log via admin client
-- [x] Test per slugify e sanitize
-- [x] **Verifica**: `npx tsc --noEmit && npm run test:run` — zero errori
+### Task 3.4 — Feedback components
+- [ ] `components/ui/toast.tsx`: Sistema toast notifications — success, error, warning, info. Auto-dismiss dopo 5s. Stack multipli. Posizione top-right. Context provider + hook useToast()
+- [ ] `components/ui/modal.tsx`: Modal/Dialog con overlay, close button, title, content, footer con actions. Trap focus, close su Escape, close su click overlay
+- [ ] `components/ui/confirm-dialog.tsx`: Dialog di conferma riutilizzabile — "Sei sicuro?" con azione e cancel. Variante danger per delete
+- [ ] `components/ui/alert.tsx`: Alert banner inline — success, error, warning, info
+- [ ] `components/ui/badge.tsx`: Badge per status (colori per: active/published=green, draft/pending=yellow, cancelled/inactive=red, ecc.)
+- [ ] `components/ui/skeleton.tsx`: Skeleton loader per cards, righe tabella, form fields
+- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
 
-### Task 0.5 — Middleware sicurezza
-- [x] `middleware.ts` nella root con: refresh sessione Supabase, security headers (X-Frame-Options: DENY, X-Content-Type-Options: nosniff, Referrer-Policy: strict-origin-when-cross-origin, Permissions-Policy, X-XSS-Protection, Strict-Transport-Security), protezione /admin/* con verifica auth + ruolo admin, CSP header
-- [x] `config.matcher` che esclude _next/static, _next/image, favicon.ico
-- [x] **Verifica**: `npx tsc --noEmit` — zero errori
+### Task 3.5 — Rich Text Editor
+- [ ] Installa `@tiptap/react`, `@tiptap/starter-kit`, `@tiptap/extension-image`, `@tiptap/extension-link`
+- [ ] `components/ui/rich-text-editor.tsx`: Editor WYSIWYG con toolbar (bold, italic, headings h2-h4, link, image, lists, blockquote, code). Output HTML. Props: value, onChange, placeholder. Sanitizza output con DOMPurify prima di salvare
+- [ ] `components/ui/rich-text-display.tsx`: Componente per renderizzare HTML sanitizzato (per blog posts, pagine, descrizioni prodotto)
+- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
 
-### Task 0.6 — Layout shells (placeholder vuoti)
-- [x] `app/layout.tsx` — root layout con html lang="it"
-- [x] `app/error.tsx` — error boundary globale
-- [x] `app/not-found.tsx` — 404 page
-- [x] `app/(storefront)/layout.tsx` — shell vuota con `{children}`
-- [x] `app/(admin)/layout.tsx` — shell vuota con `{children}`
-- [x] `app/(admin)/admin/login/page.tsx` — placeholder
-- [x] `app/(storefront)/page.tsx` — placeholder
-- [x] **Verifica**: `npm run build` — zero errori
+### Task 3.6 — Media Picker
+- [ ] `components/ui/media-picker.tsx`: Modal per selezionare media dalla libreria. Griglia di thumbnail, ricerca per nome, filtro per folder, upload diretto. Ritorna URL del media selezionato. Props: onSelect(url), accept (image/*, application/pdf)
+- [ ] `components/ui/image-upload.tsx`: Drop zone per upload diretto. Preview, progress bar, validazione client-side (tipo, dimensione). Usa media server action
+- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
 ---
 
-## FASE 1 — Database Schema + RLS + Zod + Types
+## FASE 4 — Admin Pages (CRUD completo)
 
-> Per ogni task: 1) Migration SQL in `supabase/migrations/XXXX_nome.sql` 2) RLS policies nella stessa migration 3) Zod schema in `lib/validators/` 4) Types in `types/database.ts` 5) Test Zod in `__tests__/validators/`
+> Ogni pagina admin: server component con requireAdmin(), carica dati dal DAL, passa a client components per interattività.
 
-### Task 1.1 — profiles
-- [x] Migration `supabase/migrations/0001_profiles.sql`: tabella profiles (id UUID PK ref auth.users CASCADE, role TEXT CHECK admin/customer DEFAULT customer, full_name, phone, avatar_url, timestamps). RLS: users leggono solo proprio profilo, admin legge tutti, users aggiornano solo proprio profilo MA NON il campo role (WITH CHECK), trigger on_auth_user_created che crea profilo automaticamente (SECURITY DEFINER)
-- [x] `lib/validators/profile.ts`: Zod schema — role enum, full_name min 2 chars, phone opzionale regex
-- [x] Types in `types/database.ts`
-- [x] `__tests__/validators/profile.test.ts`: validi passano, invalidi (role: "superadmin", name: "", phone: "abc") falliscono
-- [x] **Verifica**: `npx tsc --noEmit && npm run test:run`
+### Task 4.1 — Dashboard admin
+- [ ] `app/(admin)/admin/page.tsx`: Dashboard con cards riassuntive: totale ordini (per status), totale prodotti attivi, prenotazioni oggi/settimana, ultime 5 orders, ultimi 5 audit log. Dati dal DAL, layout a griglia responsive
+- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
 
-### Task 1.2 — categories
-- [x] Migration `supabase/migrations/0002_categories.sql`: tabella (id UUID, name, slug UNIQUE, description, image_url, parent_id self-ref, sort_order, is_active, timestamps). Indici su slug e parent_id. RLS: SELECT pubblico (is_active=true), INSERT/UPDATE/DELETE solo admin
-- [x] `lib/validators/categories.ts`: name min 2, slug regex `^[a-z0-9-]+$`
-- [x] Types, test Zod
-- [x] **Verifica**: `npx tsc --noEmit && npm run test:run`
+### Task 4.2 — Products CRUD
+- [ ] `app/(admin)/admin/products/page.tsx`: Lista prodotti con DataTable — colonne: immagine thumbnail, nome, SKU, prezzo, stock, status badge, azioni (edit, toggle active, delete). Paginazione server-side. Filtro per categoria, ricerca per nome/SKU
+- [ ] `app/(admin)/admin/products/new/page.tsx`: Form creazione prodotto. Tutti i campi dal Zod schema. Rich text editor per rich_description. Media picker per immagini. Slug auto-generato da nome (editabile). Preview prezzo formattato EUR
+- [ ] `app/(admin)/admin/products/[id]/edit/page.tsx`: Form modifica. Precarica dati dal DAL. Stessi campi del create. Sezione gestione immagini con drag-and-drop reorder (o almeno frecce su/giù)
+- [ ] `app/(admin)/admin/products/[id]/page.tsx`: Dettaglio prodotto read-only con tutte le info, storico ordini che includono questo prodotto
+- [ ] Tutti i form usano le server actions di Fase 1. Toast su success/error
+- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
 
-### Task 1.3 — products
-- [x] Migration `supabase/migrations/0003_products.sql`: tabella (id, name, slug UNIQUE, description, rich_description, price NUMERIC(10,2) CHECK>=0, compare_at_price, cost_price, sku UNIQUE, barcode, stock_quantity CHECK>=0, low_stock_threshold, weight_grams, category_id FK, is_active, is_featured, seo_title, seo_description, timestamps). Indici: slug, category_id, is_active, (is_featured+is_active). RLS: SELECT pubblico (is_active=true), resto admin
-- [x] `lib/validators/products.ts`: price positivo, slug regex, name min 2, stock integer non negativo
-- [x] Types, test Zod con edge: price=0 (valido), price=-1 (invalido), slug con spazi (invalido)
-- [x] **Verifica**: `npx tsc --noEmit && npm run test:run`
+### Task 4.3 — Categories CRUD
+- [ ] `app/(admin)/admin/categories/page.tsx`: Lista categorie con tree view (parent → children). Azioni: edit, delete, toggle active
+- [ ] `app/(admin)/admin/categories/new/page.tsx`: Form creazione — nome, slug, descrizione, parent_id select, immagine, sort_order
+- [ ] `app/(admin)/admin/categories/[id]/edit/page.tsx`: Form modifica
+- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
 
-### Task 1.4 — product_images
-- [x] Migration `supabase/migrations/0004_product_images.sql`: tabella (id, product_id FK CASCADE, url, alt_text, sort_order, is_primary, created_at). Indice su product_id. RLS: SELECT pubblico, INSERT/UPDATE/DELETE admin
-- [x] Zod schema, types, test
-- [x] **Verifica**: `npx tsc --noEmit && npm run test:run`
+### Task 4.4 — Orders management
+- [ ] `app/(admin)/admin/orders/page.tsx`: Lista ordini con DataTable — order_number, cliente email, totale, status badge, data, azioni. Filtro per status. Ordinamento per data
+- [ ] `app/(admin)/admin/orders/[id]/page.tsx`: Dettaglio ordine — info cliente, indirizzo spedizione/fatturazione, items con prezzo, totali, storico status. Azioni: cambia status (dropdown con solo transizioni valide), aggiungi nota
+- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
 
-### Task 1.5 — product_variants
-- [x] Migration `supabase/migrations/0005_product_variants.sql`: tabella (id, product_id FK CASCADE, name, sku UNIQUE, price_adjustment NUMERIC DEFAULT 0, stock_quantity CHECK>=0, attributes JSONB DEFAULT '{}', is_active, created_at). Indice product_id. RLS: SELECT pubblico (prodotto attivo), resto admin
-- [x] Zod schema con validazione JSONB attributes (record di string)
-- [x] Types, test
-- [x] **Verifica**: `npx tsc --noEmit && npm run test:run`
+### Task 4.5 — Bookings management
+- [ ] `app/(admin)/admin/bookings/page.tsx`: Lista prenotazioni con DataTable — data, ora, servizio, cliente, status badge, azioni
+- [ ] `app/(admin)/admin/bookings/[id]/page.tsx`: Dettaglio prenotazione con azioni (conferma, cancella, completa, no-show)
+- [ ] `app/(admin)/admin/bookings/services/page.tsx`: CRUD servizi prenotabili (nome, durata, prezzo, attivo)
+- [ ] `app/(admin)/admin/bookings/availability/page.tsx`: Gestione disponibilità settimanale — per ogni giorno della settimana: attivo/inattivo, orario inizio/fine
+- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
 
-### Task 1.6 — orders + order_items
-- [x] Migration `supabase/migrations/0006_orders.sql`: tabella orders (id, order_number UNIQUE, user_id FK nullable, email, status CHECK IN pending/confirmed/processing/shipped/delivered/cancelled/refunded, subtotal/tax/shipping/discount/total NUMERIC CHECK>=0, shipping_address JSONB, billing_address JSONB, notes, stripe_payment_intent_id, timestamps). Tabella order_items (id, order_id FK CASCADE, product_id FK SET NULL, variant_id FK SET NULL, product_name, variant_name, quantity CHECK>0, unit_price CHECK>=0, total_price CHECK>=0, created_at). Indici: orders(user_id, status, order_number), order_items(order_id). RLS: users vedono solo propri ordini, admin vede tutti. Funzione SQL generate_order_number() formato ORD-YYYY-NNNNNN
-- [x] `lib/validators/orders.ts`: Zod per ordine, items, address JSONB (street, city, zip, country required)
-- [x] Test: status invalido, quantity 0, address incompleto
-- [x] **Verifica**: `npx tsc --noEmit && npm run test:run`
-### Task 1.7 — pages
-- [x] Migration `supabase/migrations/0007_pages.sql`: tabella (id, title, slug UNIQUE, content, rich_content, seo_title, seo_description, is_published, published_at, timestamps). Indice slug. RLS: SELECT pubblico (is_published=true), resto admin
-- [x] Zod, types, test
-- [x] **Verifica**: `npx tsc --noEmit && npm run test:run`
+### Task 4.6 — Blog CRUD
+- [ ] `app/(admin)/admin/blog/page.tsx`: Lista post con DataTable — titolo, autore, status (published/draft), data pubblicazione, azioni
+- [ ] `app/(admin)/admin/blog/new/page.tsx`: Form creazione — titolo, slug auto, excerpt, rich_content con editor, cover image con media picker, tags (input con chip/tag), SEO fields, publish toggle
+- [ ] `app/(admin)/admin/blog/[id]/edit/page.tsx`: Form modifica
+- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
 
-### Task 1.8 — blog_posts
-- [x] Migration `supabase/migrations/0008_blog_posts.sql`: tabella (id, title, slug UNIQUE, excerpt, content, rich_content, cover_image_url, author_id FK SET NULL, is_published, published_at, seo_title, seo_description, tags TEXT[], timestamps). Indici: slug, (is_published+published_at DESC), tags GIN. RLS: SELECT pubblico (is_published=true), resto admin
-- [x] Zod — tags array di stringhe, slug regex
-- [x] Types, test
-- [x] **Verifica**: `npx tsc --noEmit && npm run test:run`
+### Task 4.7 — Pages CRUD
+- [ ] `app/(admin)/admin/pages/page.tsx`: Lista pagine statiche
+- [ ] `app/(admin)/admin/pages/new/page.tsx`: Form creazione — titolo, slug, rich_content con editor, SEO fields, publish toggle
+- [ ] `app/(admin)/admin/pages/[id]/edit/page.tsx`: Form modifica
+- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
 
-### Task 1.9 — bookings (services + availability + bookings)
-- [x] Migration `supabase/migrations/0009_bookings.sql`: tabella booking_services (id, name, description, duration_minutes CHECK>0, price CHECK>=0, is_active, sort_order, created_at). Tabella booking_availability (id, day_of_week CHECK 0-6, start_time TIME, end_time TIME, is_active, CHECK end>start). Tabella bookings (id, user_id FK nullable, service_id FK RESTRICT, customer_name, customer_email, customer_phone, booking_date DATE, start_time TIME, end_time TIME, status CHECK IN pending/confirmed/cancelled/completed/no_show, notes, timestamps, CHECK end>start). Indici: bookings(booking_date+start_time, user_id, status). RLS: servizi/disponibilità SELECT pubblico, bookings SELECT proprio utente+admin, INSERT pubblico, UPDATE/DELETE admin. Funzione SQL check_booking_conflict(p_date, p_start, p_end) ritorna boolean
-- [x] Zod schemas per tutti e tre
-- [x] Test Zod
-- [x] **Verifica**: `npx tsc --noEmit && npm run test:run`
+### Task 4.8 — Media library
+- [ ] `app/(admin)/admin/media/page.tsx`: Griglia media con thumbnail, nome, dimensione, data upload. Filtro per folder. Upload multiplo con drag-and-drop zone. Delete con confirm dialog. Click per copiare URL
+- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
 
-### Task 1.10 — site_settings
-- [x] Migration `supabase/migrations/0010_site_settings.sql`: tabella (key TEXT PK, value JSONB, updated_at). RLS: SELECT pubblico, UPDATE/INSERT admin, DELETE nessuno. Seed: site_name, site_description, contact_email, contact_phone, address, social_links, business_hours, currency (EUR), tax_rate (22)
-- [x] Zod schemas per ogni tipo di setting
-- [x] Types, test
-- [x] **Verifica**: `npx tsc --noEmit && npm run test:run`
-
-### Task 1.11 — media
-- [x] Migration `supabase/migrations/0011_media.sql`: tabella (id, filename, original_filename, mime_type, size_bytes, url, alt_text, folder DEFAULT 'general', uploaded_by FK SET NULL, created_at). Indice folder. RLS: SELECT pubblico, INSERT/DELETE admin
-- [x] Zod con whitelist MIME: image/jpeg, image/png, image/webp, image/svg+xml, application/pdf. Max 5MB immagini, 20MB PDF
-- [x] Types, test (includi MIME invalido, size over limit)
-- [x] **Verifica**: `npx tsc --noEmit && npm run test:run`
-
-### Task 1.12 — audit_log
-- [x] Migration `supabase/migrations/0012_audit_log.sql`: tabella (id, user_id FK SET NULL, action, entity_type, entity_id, old_values JSONB, new_values JSONB, ip_address, user_agent, created_at). Indici: user_id, (entity_type+entity_id), created_at DESC. RLS: SELECT solo admin, INSERT solo via service role, NO UPDATE, NO DELETE
-- [x] Types (no Zod — non riceve input utente)
-- [x] **Verifica**: `npx tsc --noEmit`
-
-### Task 1.13 — Types Database completo
-- [x] Aggiorna `types/database.ts` con TUTTE le tabelle: tipo Database con public.Tables per ogni tabella (Row, Insert, Update). Esporta tipi: Product, Category, Order, OrderItem, BlogPost, Page, Booking, BookingService, Media, Profile, SiteSetting, AuditLog
-- [x] **Verifica**: `npx tsc --noEmit` — ZERO errori, ogni tipo usato nei validators senza cast
+### Task 4.9 — Site Settings
+- [ ] `app/(admin)/admin/settings/page.tsx`: Form con sezioni: Generale (nome sito, descrizione, email, telefono, indirizzo), Social (link social), Business (orari, valuta, aliquota IVA). Salva con server action, toast feedback
+- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
 ---
 
-## FASE 2 — Data Access Layer + Server Actions + Cart + Auth
+## FASE 5 — Storefront (pagine pubbliche)
 
-### Task 2.1 — DAL Products
-- [x] `lib/dal/products.ts`: getProducts({page, perPage, categoryId, search, sortBy, isActive}) → {data, count}, getProductBySlug(slug) → Product con images e variants, getProductById(id), getFeaturedProducts(limit), getRelatedProducts(productId, categoryId, limit), searchProducts(query, limit). OGNI funzione: server client (RLS attiva), return type esplicito, JSDoc
-- [x] `__tests__/dal/products.test.ts`: mock supabase, testa che le query siano costruite correttamente
-- [x] **Verifica**: `npx tsc --noEmit && npm run test:run`
+### Task 5.1 — Homepage
+- [ ] `app/(storefront)/page.tsx`: Homepage con: hero section (titolo, sottotitolo, CTA), prodotti in evidenza (is_featured, max 8, griglia), categorie principali con immagine, CTA prenotazioni. Dati dal DAL, tutto server-rendered
+- [ ] `components/storefront/product-card.tsx`: Card prodotto — immagine, nome, prezzo (con compare_at_price barrato se presente), badge "In evidenza", link a dettaglio
+- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
 
-### Task 2.2 — Server Actions Products (Admin)
-- [x] `app/(admin)/admin/products/actions.ts` con `"use server"`: createProduct(formData) con requireAdmin+Zod+slug generation+audit log+revalidatePath, updateProduct(id, formData) con diff audit, deleteProduct(id) soft delete, toggleProductActive(id), updateProductStock(id, quantity), reorderProductImages(productId, imageIds[])
-- [x] OGNI action: requireAdmin(), Zod PRIMO step, try/catch, audit log, return {success} o {error: string}
-- [x] `__tests__/actions/products.test.ts`: mock auth+supabase, testa happy path + validation error + auth error
-- [x] **Verifica**: `npx tsc --noEmit && npm run test:run`
+### Task 5.2 — Catalogo prodotti
+- [ ] `app/(storefront)/products/page.tsx`: Griglia prodotti con filtro categoria (sidebar o dropdown), ricerca, ordinamento (prezzo asc/desc, nome, recenti), paginazione. URL search params per filtri persistenti
+- [ ] `app/(storefront)/products/[slug]/page.tsx`: Dettaglio prodotto — galleria immagini, nome, prezzo, descrizione rich, varianti selezionabili, selettore quantità, bottone "Aggiungi al carrello", prodotti correlati. generateMetadata per SEO
+- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
 
-### Task 2.3 — DAL + Actions Categories
-- [x] `lib/dal/categories.ts`: getCategories(), getCategoryBySlug(), getCategoryTree() (parent/children)
-- [x] `app/(admin)/admin/categories/actions.ts`: createCategory(), updateCategory(), deleteCategory(), reorderCategories(ids[])
-- [x] Test
-- [x] **Verifica**: `npx tsc --noEmit && npm run test:run`
+### Task 5.3 — Carrello
+- [ ] `app/(storefront)/cart/page.tsx`: Pagina carrello — lista items con immagine, nome, prezzo, quantità modificabile, rimuovi, subtotale per riga. Totali: subtotale, IVA, spedizione, totale. Bottone "Procedi al checkout". Carrello vuoto: messaggio + link catalogo
+- [ ] `components/storefront/cart-icon.tsx`: Icona carrello nell'header con counter items. Client component che legge cart da cookie
+- [ ] `components/storefront/add-to-cart-button.tsx`: Bottone con loading state, feedback toast "Aggiunto al carrello"
+- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
 
-### Task 2.4 — DAL + Actions Orders
-- [x] `lib/dal/orders.ts`: getOrders(filters), getOrderById(), getOrdersByUser(userId), getOrderStats() (count per status)
-- [x] `app/(admin)/admin/orders/actions.ts`: updateOrderStatus(id, newStatus), cancelOrder(id), addOrderNote(id, note)
-- [x] Validazione transizioni: pending→confirmed/cancelled, confirmed→processing/cancelled, processing→shipped/cancelled, shipped→delivered, delivered→refunded. Nessuna altra transizione permessa
-- [x] Test: transizioni valide passano, invalide (delivered→pending) falliscono
-- [x] **Verifica**: `npx tsc --noEmit && npm run test:run`
+### Task 5.4 — Checkout
+- [ ] `app/(storefront)/checkout/page.tsx`: Form checkout — sezione dati cliente (nome, email, telefono), indirizzo spedizione (via, città, CAP, provincia, paese), indirizzo fatturazione (checkbox "uguale a spedizione"), riepilogo ordine, note. Submit chiama createOrder server action
+- [ ] `app/(storefront)/checkout/success/page.tsx`: Pagina conferma ordine — "Grazie per il tuo ordine!", numero ordine, riepilogo, "Il pagamento verrà gestito separatamente" (Stripe non integrato)
+- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
 
-### Task 2.5 — DAL + Actions Pages
-- [x] `lib/dal/pages.ts`: getPages(), getPageBySlug(), getPublishedPages()
-- [x] Actions: createPage(), updatePage(), deletePage(), togglePublished(). Sanitizzazione rich_content con DOMPurify
-- [x] Test
-- [x] **Verifica**: `npx tsc --noEmit && npm run test:run`
+### Task 5.5 — Blog pubblico
+- [ ] `app/(storefront)/blog/page.tsx`: Lista post pubblicati con cover image, titolo, excerpt, data, tags. Paginazione
+- [ ] `app/(storefront)/blog/[slug]/page.tsx`: Dettaglio post — cover image, titolo, data, autore, rich_content renderizzato, tags. generateMetadata per SEO
+- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
 
-### Task 2.6 — DAL + Actions Blog
-- [x] `lib/dal/blog.ts`: getPosts(filters), getPostBySlug(), getPublishedPosts({page, perPage}), getPostsByTag(tag)
-- [x] Actions: createPost(), updatePost(), deletePost(), togglePublished(). Sanitizzazione rich_content, auto-excerpt (primi 160 chars)
-- [x] Test
-- [x] **Verifica**: `npx tsc --noEmit && npm run test:run`
+### Task 5.6 — Prenotazioni pubbliche
+- [ ] `app/(storefront)/bookings/page.tsx`: Lista servizi prenotabili con nome, descrizione, durata, prezzo. Selezione servizio → selettore data → slot disponibili calcolati dal DAL → form dati cliente → conferma
+- [ ] `components/storefront/booking-calendar.tsx`: Calendario selezione data (mese corrente + navigazione). Giorni con disponibilità evidenziati. Click su giorno → mostra slot orari disponibili
+- [ ] `components/storefront/booking-form.tsx`: Form prenotazione — nome, email, telefono, note. Submit chiama createBooking
+- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
 
-### Task 2.7 — DAL + Actions Bookings
-- [x] `lib/dal/bookings.ts`: getBookings(filters), getBookingById(id), getAvailableSlots(date, serviceId) che calcola slot liberi basandosi su durata servizio e bookings esistenti, getBookingServices()
-- [x] Actions admin: confirmBooking(id), cancelBooking(id), completeBooking(id), markNoShow(id), updateAvailability(data), createService(), updateService(), deleteService()
-- [x] Action pubblica: createBooking(formData) con Zod + verifica slot libero + insert (documentare race condition in KNOWN_ISSUES.md)
-- [x] `__tests__/dal/bookings.test.ts`: test calcolo slot — nessun conflitto, conflitto parziale, giorno pieno, slot al confine
-- [x] **Verifica**: `npx tsc --noEmit && npm run test:run`
+### Task 5.7 — Pagine statiche + Account
+- [ ] `app/(storefront)/[slug]/page.tsx`: Pagina dinamica che carica da pages per slug. generateMetadata. 404 se non trovata
+- [ ] `app/(storefront)/account/page.tsx`: Area utente — profilo (nome, email, telefono, modifica), storico ordini, storico prenotazioni. Protetta da auth
+- [ ] `app/(storefront)/auth/login/page.tsx`: Form login (email + password), link a registrazione e reset password
+- [ ] `app/(storefront)/auth/register/page.tsx`: Form registrazione (nome, email, password, conferma password)
+- [ ] `app/(storefront)/auth/reset-password/page.tsx`: Form reset password (email)
+- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
+---
 
-### Task 2.8 — DAL + Actions Media
-- [x] `lib/dal/media.ts`: getMedia(folder?), getMediaById(id)
-- [x] Actions: uploadMedia(formData) con validazione MIME server-side + size + filename sicuro con nanoid + upload Storage + insert DB + audit log. deleteMedia(id) elimina da Storage+DB+audit. updateMediaAlt(id, altText)
-- [x] Test
-- [x] **Verifica**: `npx tsc --noEmit && npm run test:run`
+## FASE 6 — Security Hardening
 
-### Task 2.9 — DAL + Actions Site Settings
-- [x] `lib/dal/settings.ts`: getSettings(), getSetting(key), getPublicSettings()
-- [x] Actions: updateSetting(key, value), updateSettings(settings). Cache con unstable_cache + tag site-settings, revalidateTag su update
-- [x] Test
-- [x] **Verifica**: `npx tsc --noEmit && npm run test:run`
-### Task 2.10 — Cart logic
-- [x] `lib/cart/types.ts`: CartItem (productId, variantId, quantity — NO prezzo, viene dal DB), Cart (items + signature HMAC), CartWithPrices (items con name/price/total + subtotal/tax/shipping/total)
-- [x] `lib/cart/cart.ts`: getCart() leggi cookie+verifica HMAC+parse, setCart(cart) firma HMAC+scrivi cookie httpOnly, addToCart(productId, variantId, quantity), updateQuantity(productId, variantId, quantity) se 0 rimuovi, removeFromCart(), clearCart(), calculateTotals(cart) legge OGNI prezzo dal DB+calcola subtotal+tax da settings+shipping. HMAC con SHA-256 e HMAC_SECRET da env
-- [x] `lib/cart/actions.ts` con `"use server"`: addToCartAction, updateCartAction, removeFromCartAction, clearCartAction
-- [x] `__tests__/cart/cart.test.ts`: add/remove/update/clear, HMAC cookie manipolato→cart vuoto, calculateTotals con mock prezzi DB, anti-tampering prezzo cambiato→usa nuovo
-- [x] **Verifica**: `npx tsc --noEmit && npm run test:run`
+### Task 6.1 — Input validation audit
+- [ ] Verifica OGNI server action: Zod validation è il PRIMO step dopo requireAdmin/requireAuth
+- [ ] Verifica OGNI form: validazione client-side con Zod prima del submit
+- [ ] Verifica rich_content: sanitizzato con DOMPurify PRIMA di salvare e PRIMA di renderizzare
+- [ ] Verifica slug generation: nessun carattere speciale, nessuna injection possibile
+- [ ] Se trovi violazioni, fixale. Documenta in SECURITY_AUDIT.md
+- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
 
-### Task 2.11 — Auth helpers + actions
-- [x] `lib/auth/helpers.ts`: getCurrentUser()→{id,email,role}|null, requireAuth()→redirect se non autenticato, requireAdmin()→redirect se non admin, isAdmin(userId)→boolean
-- [x] `lib/auth/actions.ts` con `"use server"`: signIn(formData), signUp(formData), signOut(), resetPassword(formData), updatePassword(formData). Rate limiting su signIn: max 5/15min per email (in-memory Map — documentare in KNOWN_ISSUES che serve Redis in produzione)
-- [x] `__tests__/auth/helpers.test.ts`: mock session, requireAuth con/senza user, requireAdmin con/senza ruolo
-- [x] **Verifica**: `npx tsc --noEmit && npm run test:run`
+### Task 6.2 — Security headers audit
+- [ ] Verifica middleware.ts: tutti gli headers security presenti (X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, X-XSS-Protection, Strict-Transport-Security, Content-Security-Policy)
+- [ ] CSP: restrittiva ma funzionale (script-src 'self', style-src 'self' 'unsafe-inline' per Tailwind, img-src 'self' + Supabase storage URL, connect-src 'self' + Supabase URL)
+- [ ] Verifica: nessuna pagina admin accessibile senza auth
+- [ ] Verifica: nessuna API route espone dati senza auth dove richiesto
+- [ ] Documenta in SECURITY_AUDIT.md
+- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
 
-### Task 2.12 — Checkout action
-- [x] `lib/checkout/actions.ts` con `"use server"`: createOrder(formData) che: 1) Zod validation 2) getCart() verifica non vuoto 3) calculateTotals() prezzi freschi dal DB 4) verifica stock per ogni item 5) genera order_number 6) insert ordine+items 7) decrementa stock (documentare: NON atomico senza DB function RPC) 8) clearCart() 9) return {success, orderNumber} o {error}
-- [x] Test con mock
-- [x] **Verifica**: `npx tsc --noEmit && npm run test:run`
+### Task 6.3 — Error handling audit
+- [ ] Verifica: NESSUNA server action espone stack traces o messaggi interni
+- [ ] Verifica: app/error.tsx cattura errori e mostra messaggio generico
+- [ ] Verifica: OGNI form mostra errore utente-friendly, non errore tecnico
+- [ ] Verifica: 404 page funziona per route inesistenti
+- [ ] Documenta in SECURITY_AUDIT.md
+- [ ] **Verifica**: `npm run build`
 
-### Task 2.13 — KNOWN_ISSUES.md
-- [x] Crea `KNOWN_ISSUES.md` documentando: rate limiting in-memory (serve Redis), stock decrement non atomico (serve RPC), booking slot race condition (serve lock/transaction), Stripe non integrato, file upload magic bytes base
-- [x] **Verifica**: file esiste con almeno 5 known issues (8 documented)
+---
 
-### Task 2.14 — Build finale fase 2
-- [x] `npx tsc --noEmit` — ZERO errori
-- [x] `npx eslint app/ lib/` — ZERO errori (next lint removed in Next.js 16)
-- [x] `npm run build` — ZERO errori
-- [x] `npm run test:run` — ZERO fallimenti, 157 test (18 test files)
-- [x] **Verifica**: tutti e 4 i comandi passano
+## FASE 7 — Test di Integrazione
+
+### Task 7.1 — Test e-commerce flow
+- [ ] `__tests__/integration/ecommerce-flow.test.ts`: Test completo (con mock): browse prodotti → aggiungi al carrello → modifica quantità → checkout → ordine creato con status pending → verifica order_number generato → verifica stock decrementato
+- [ ] **Verifica**: `npm run test:run`
+
+### Task 7.2 — Test bookings flow
+- [ ] `__tests__/integration/bookings-flow.test.ts`: Test (con mock): lista servizi → seleziona servizio → verifica slot disponibili → crea prenotazione → verifica slot non più disponibile → admin conferma → verifica status cambiato
+- [ ] **Verifica**: `npm run test:run`
+
+### Task 7.3 — Test content management flow
+- [ ] `__tests__/integration/content-flow.test.ts`: Test (con mock): admin crea blog post draft → pubblica → visibile su storefront → admin crea pagina → pubblica → accessibile via slug
+- [ ] **Verifica**: `npm run test:run`
+
+### Task 7.4 — Build finale
+- [ ] `npx tsc --noEmit` — ZERO errori
+- [ ] `npx next lint` — ZERO errori
+- [ ] `npm run build` — ZERO errori
+- [ ] `npm run test:run` — ZERO fallimenti
+- [ ] Crea SECURITY_AUDIT.md se non esiste (anche vuoto con header)
+- [ ] **Verifica**: tutti e 4 i comandi passano
 
 ---
 
@@ -274,20 +221,25 @@
 Dopo 5 tentativi su un task: 1) Scrivi in BLOCKED.md 2) Segna [BLOCKED] 3) Passa avanti
 
 ### Ordine
-FASE 0 → FASE 1 → FASE 2. Dentro ogni fase, ordine numerico. Non saltare.
+FASE 3 → FASE 4 → FASE 5 → FASE 6 → FASE 7. Dentro ogni fase, ordine numerico. Non saltare.
 
 ### Validazione OGNI task
 1. `npx tsc --noEmit` senza errori
-2. `npm run test:run` senza fallimenti (se il task include test)
-3. `npm run build` senza errori (se tocca app/)
+2. `npm run build` senza errori
+3. `npm run test:run` senza fallimenti (se il task include test)
 4. Spunta `- [x]`
 5. Committa: `feat(faseX): taskY.Z - descrizione`
 
+### Dipendenze extra permesse
+- `@tiptap/*` per rich text editor (Task 3.5)
+- `lucide-react` per icone (se non già presente)
+- `date-fns` (già presente)
+- NON installare altre dipendenze senza documentare il motivo in DEPENDENCIES_ADDED.md
+
 ### NON fare
 - NON usare `any`
-- NON disabilitare RLS
-- NON esporre service role al client
-- NON saltare Zod validation
 - NON lasciare console.log (usa logger)
+- NON creare pagine admin senza requireAdmin()
+- NON renderizzare HTML senza sanitizzazione DOMPurify
 - NON committare segreti
-- NON installare dipendenze non richieste senza documentare il motivo
+- NON installare component library complete (shadcn, MUI, ecc.) — usa componenti custom con Tailwind
