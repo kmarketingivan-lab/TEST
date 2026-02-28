@@ -40,9 +40,9 @@
 - [x] **Verifica**: `npx tsc --noEmit && npm run build`
 
 ### Task 3.3 — DataTable component
-- [ ] `components/ui/data-table.tsx`: Tabella riutilizzabile con: colonne configurabili (header, accessor, render function), sorting (client-side), paginazione (pagina corrente, per page, totale), selezione righe con checkbox, azioni per riga (dropdown menu), empty state, loading state (skeleton), responsive (scroll orizzontale su mobile)
-- [ ] Props tipizzate con generics: `DataTable<T>` dove T è il tipo dei dati
-- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
+- [x] `components/ui/data-table.tsx`: Tabella riutilizzabile con: colonne configurabili (header, accessor, render function), sorting (client-side), paginazione (pagina corrente, per page, totale), selezione righe con checkbox, azioni per riga (dropdown menu), empty state, loading state (skeleton), responsive (scroll orizzontale su mobile)
+- [x] Props tipizzate con generics: `DataTable<T>` dove T è il tipo dei dati
+- [x] **Verifica**: `npx tsc --noEmit && npm run build`
 
 ### Task 3.4 — Feedback components
 - [ ] `components/ui/toast.tsx`: Sistema toast notifications — success, error, warning, info. Auto-dismiss dopo 5s. Stack multipli. Posizione top-right. Context provider + hook useToast()
