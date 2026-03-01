@@ -1,1 +1,12 @@
 @import "tailwindcss";
+
+@layer base {
+  body {
+    @apply bg-white text-neutral-900 antialiased;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-bold;
+  }
+}

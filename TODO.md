@@ -24,9 +24,9 @@
 ## FASE T1 — CSS base + globals
 
 ### Task T1.1 — globals.css e font
-- [ ] Modifica `app/globals.css`: aggiungi dopo `@import "tailwindcss";` un blocco `@layer base` con: `body { @apply bg-white text-neutral-900 antialiased; }`, `h1, h2, h3 { @apply font-bold; }`
-- [ ] Modifica `app/layout.tsx`: aggiungi Google Font "Inter" (o Montserrat) via next/font/google, applica al body
-- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
+- [x] Modifica `app/globals.css`: aggiungi dopo `@import "tailwindcss";` un blocco `@layer base` con: `body { @apply bg-white text-neutral-900 antialiased; }`, `h1, h2, h3 { @apply font-bold; }`
+- [x] Modifica `app/layout.tsx`: aggiungi Google Font "Inter" (o Montserrat) via next/font/google, applica al body
+- [x] **Verifica**: `npx tsc --noEmit && npm run build`
 ---
 
 ## FASE T2 — Componenti UI base (colori)
