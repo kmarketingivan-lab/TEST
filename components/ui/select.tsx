@@ -43,7 +43,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
             error ? `${selectId}-error` : description ? `${selectId}-desc` : undefined
           }
           className={`rounded-md border px-3 py-2 text-sm shadow-sm transition-colors bg-white
-            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+            focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-700
             disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500
             ${error ? "border-red-500 focus:ring-red-500 focus:border-red-500" : "border-gray-300"}
             ${className ?? ""}`}

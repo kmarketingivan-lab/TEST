@@ -32,37 +32,37 @@
 ## FASE T2 — Componenti UI base (colori)
 
 ### Task T2.1 — Button component
-- [ ] `components/ui/button.tsx`: cambia `variantClasses`:
+- [x] `components/ui/button.tsx`: cambia `variantClasses`:
   - primary: `bg-red-700 text-white hover:bg-red-800 focus:ring-red-500 disabled:bg-red-300`
   - secondary: `bg-white text-neutral-700 border border-neutral-300 hover:bg-neutral-50 focus:ring-neutral-500 disabled:bg-neutral-100`
   - danger: lascia invariato (già rosso)
   - ghost: `bg-transparent text-neutral-700 hover:bg-neutral-100 focus:ring-neutral-500 disabled:text-neutral-400`
-- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
+- [x] **Verifica**: `npx tsc --noEmit && npm run build`
 
 ### Task T2.2 — Badge component
-- [ ] `components/ui/badge.tsx`: cambia `variantClasses`:
+- [x] `components/ui/badge.tsx`: cambia `variantClasses`:
   - info: `bg-red-100 text-red-800` (era blue)
   - Resto invariato (success=green, warning=yellow, error=red, default=gray)
-- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
+- [x] **Verifica**: `npx tsc --noEmit && npm run build`
 
 ### Task T2.3 — Input, Select, Textarea, Checkbox focus ring
-- [ ] In `components/ui/input.tsx`, `components/ui/select.tsx`, `components/ui/textarea.tsx`: cambia ogni `focus:ring-blue-*` / `focus:border-blue-*` in `focus:ring-red-500` / `focus:border-red-700`
-- [ ] In `components/ui/checkbox.tsx`: cambia accent/check color da blue a `accent-red-700` o `text-red-700`
-- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
+- [x] In `components/ui/input.tsx`, `components/ui/select.tsx`, `components/ui/textarea.tsx`: cambia ogni `focus:ring-blue-*` / `focus:border-blue-*` in `focus:ring-red-500` / `focus:border-red-700`
+- [x] In `components/ui/checkbox.tsx`: cambia accent/check color da blue a `accent-red-700` o `text-red-700`
+- [x] **Verifica**: `npx tsc --noEmit && npm run build`
 
 ### Task T2.4 — Toast e Alert
-- [ ] `components/ui/toast.tsx`: cambia variante info da `bg-blue-*` a `bg-red-50 border-red-500 text-red-800`
-- [ ] `components/ui/alert.tsx`: cambia variante info da `bg-blue-*` / `text-blue-*` a `bg-red-50` / `text-red-800` / `border-red-300`
-- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
+- [x] `components/ui/toast.tsx`: cambia variante info da `bg-blue-*` a `bg-red-50 border-red-500 text-red-800`
+- [x] `components/ui/alert.tsx`: cambia variante info da `bg-blue-*` / `text-blue-*` a `bg-red-50` / `text-red-800` / `border-red-300`
+- [x] **Verifica**: `npx tsc --noEmit && npm run build`
 
 ### Task T2.5 — Modal e Confirm Dialog
-- [ ] `components/ui/modal.tsx`: se ci sono accenti blue, cambiali in red-700
-- [ ] `components/ui/confirm-dialog.tsx`: il bottone conferma danger è già rosso, OK. Se c'è un bottone primary blue cambialo in red-700
-- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
+- [x] `components/ui/modal.tsx`: se ci sono accenti blue, cambiali in red-700
+- [x] `components/ui/confirm-dialog.tsx`: il bottone conferma danger è già rosso, OK. Se c'è un bottone primary blue cambialo in red-700
+- [x] **Verifica**: `npx tsc --noEmit && npm run build`
 
 ### Task T2.6 — DataTable
-- [ ] `components/ui/data-table.tsx`: cambia ogni `text-blue-*` / `bg-blue-*` in equivalente `text-red-700` / `bg-red-50` (header active, pagination active, checkbox, link sorting)
-- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
+- [x] `components/ui/data-table.tsx`: cambia ogni `text-blue-*` / `bg-blue-*` in equivalente `text-red-700` / `bg-red-50` (header active, pagination active, checkbox, link sorting)
+- [x] **Verifica**: `npx tsc --noEmit && npm run build`
 ---
 
 ## FASE T3 — Layout Storefront

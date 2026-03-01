@@ -25,14 +25,14 @@ const icons: Record<ToastType, React.ReactNode> = {
   success: <CheckCircle className="h-5 w-5 text-green-500" />,
   error: <AlertCircle className="h-5 w-5 text-red-500" />,
   warning: <AlertTriangle className="h-5 w-5 text-yellow-500" />,
-  info: <Info className="h-5 w-5 text-blue-500" />,
+  info: <Info className="h-5 w-5 text-red-500" />,
 };
 
 const bgColors: Record<ToastType, string> = {
   success: "bg-green-50 border-green-200",
   error: "bg-red-50 border-red-200",
   warning: "bg-yellow-50 border-yellow-200",
-  info: "bg-blue-50 border-blue-200",
+  info: "bg-red-50 border-red-500",
 };
 
 /** Props for the ToastProvider component */
