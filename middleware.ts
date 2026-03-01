@@ -24,9 +24,14 @@ export async function middleware(request: NextRequest) {
     "Strict-Transport-Security",
     "max-age=31536000; includeSubDomains"
   );
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+  const isLocal = supabaseUrl.startsWith("http://localhost") || supabaseUrl.startsWith("http://127.0.0.1");
+  const cspConnectSrc = isLocal
+    ? `'self' ${supabaseUrl} https://*.supabase.co`
+    : `'self' https://*.supabase.co`;
   response.headers.set(
     "Content-Security-Policy",
-    "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co"
+    `default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src ${cspConnectSrc}`
   );
 
   // Protect /admin/* routes (except login page)
