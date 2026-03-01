@@ -4,33 +4,27 @@ Limitazioni note della Fase 1. Da risolvere nelle fasi successive o prima del de
 
 ---
 
-## 1. Rate Limiting In-Memory
+## ~~1. Rate Limiting In-Memory~~ ✅ RISOLTO
 
-**File**: `lib/auth/actions.ts`
+**Risolto in**: `lib/utils/rate-limit.ts`, `lib/auth/actions.ts`, `lib/checkout/actions.ts`, `lib/cart/actions.ts`
 
-Il rate limiting su signIn utilizza una `Map` in-memory. Questo funziona solo su una singola istanza del server. In produzione con più istanze (o serverless), ogni istanza ha il proprio contatore.
-
-**Soluzione**: Sostituire con Redis (Upstash) o un rate limiter distribuito.
+Rate limiting distribuito via Upstash Redis con fallback noop per dev locale. Preset: auth (5 req/60s), checkout (3 req/60s), default (10 req/10s).
 
 ---
 
-## 2. Stock Decrement Non Atomico
+## ~~2. Stock Decrement Non Atomico~~ ✅ RISOLTO
 
-**File**: `lib/checkout/actions.ts`
+**Risolto in**: `supabase/migrations/20260228000014_atomic_stock.sql`, `lib/checkout/actions.ts`
 
-Il decremento dello stock durante il checkout è un read-then-write non atomico. Due ordini concorrenti per lo stesso prodotto potrebbero entrambi passare il check dello stock e decrementare, portando a stock negativo.
-
-**Soluzione**: Creare una funzione RPC PostgreSQL che decrementa atomicamente lo stock con `UPDATE ... SET stock_quantity = stock_quantity - $1 WHERE stock_quantity >= $1 RETURNING stock_quantity`, oppure usare un advisory lock.
+Creata funzione RPC `decrement_stock(p_product_id, p_quantity)` con `SELECT ... FOR UPDATE` per garantire atomicità. Il checkout usa `supabase.rpc('decrement_stock')`.
 
 ---
 
-## 3. Booking Slot Race Condition
+## ~~3. Booking Slot Race Condition~~ ✅ RISOLTO
 
-**File**: `lib/dal/bookings.ts`, `app/(admin)/admin/bookings/actions.ts`
+**Risolto in**: `supabase/migrations/20260228000015_booking_unique.sql`, `app/(admin)/admin/bookings/actions.ts`
 
-La verifica dello slot disponibile e l'inserimento della prenotazione sono due operazioni separate. Due utenti che prenotano lo stesso slot contemporaneamente potrebbero entrambi superare il check e creare prenotazioni sovrapposte.
-
-**Soluzione**: Usare un unique constraint parziale su `(booking_date, start_time)` con `WHERE status != 'cancelled'`, oppure un advisory lock, oppure una funzione RPC con `SELECT ... FOR UPDATE`.
+Aggiunto unique index parziale su `(service_id, booking_date, start_time) WHERE status != 'cancelled'`. Errore `23505` (unique_violation) gestito nel codice con messaggio "Questo slot è già stato prenotato".
 
 ---
 
@@ -44,23 +38,19 @@ Il checkout non include l'integrazione con Stripe o altri payment gateway. Gli o
 
 ---
 
-## 5. File Upload — Validazione Magic Bytes Assente
+## ~~5. File Upload — Validazione Magic Bytes Assente~~ ✅ RISOLTO
 
-**File**: `app/(admin)/admin/media/actions.ts`
+**Risolto in**: `app/api/media/upload/route.ts`
 
-La validazione MIME dei file upload si basa solo sul MIME type dichiarato dal browser, non sui magic bytes del file. Un utente potrebbe rinominare un file eseguibile con estensione .jpg e il MIME type verrebbe accettato.
-
-**Soluzione**: Aggiungere validazione basata sui magic bytes (primi byte del file) per verificare il tipo reale del contenuto. Librerie come `file-type` possono essere usate per questo.
+Aggiunta validazione magic bytes via `file-type` (fileTypeFromBuffer). Whitelist: image/jpeg, image/png, image/webp, image/gif. File con MIME non corrispondente ai magic bytes vengono rifiutati con 400.
 
 ---
 
-## 6. Order Number Generation Non Atomica
+## ~~6. Order Number Generation Non Atomica~~ ✅ RISOLTO
 
-**File**: `lib/checkout/actions.ts`
+**Risolto in**: `supabase/migrations/20260228000016_order_sequence.sql`, `lib/checkout/actions.ts`
 
-La generazione del numero ordine (`ORD-YYYY-NNNNNN`) si basa su un conteggio degli ordini esistenti. Due ordini creati simultaneamente potrebbero ottenere lo stesso numero.
-
-**Soluzione**: Usare la funzione SQL `generate_order_number()` già definita nella migration `0006_orders.sql`, oppure usare una sequence PostgreSQL dedicata.
+Creata sequence PostgreSQL `order_number_seq` e funzione `generate_order_number()` che usa `nextval()`. Il checkout usa `supabase.rpc('generate_order_number')`.
 
 ---
 

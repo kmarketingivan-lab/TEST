@@ -4,32 +4,7 @@ import { z } from "zod/v4";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { logger } from "@/lib/utils/logger";
-
-// ============================================
-// Rate limiting (in-memory — see KNOWN_ISSUES.md)
-// ============================================
-
-const loginAttempts = new Map<string, { count: number; resetAt: number }>();
-const MAX_ATTEMPTS = 5;
-const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
-
-/**
- * Check and increment rate limit for an email.
- * @param email - Email to check
- * @returns True if rate limited
- */
-function isRateLimited(email: string): boolean {
-  const now = Date.now();
-  const entry = loginAttempts.get(email);
-
-  if (!entry || now > entry.resetAt) {
-    loginAttempts.set(email, { count: 1, resetAt: now + WINDOW_MS });
-    return false;
-  }
-
-  entry.count++;
-  return entry.count > MAX_ATTEMPTS;
-}
+import { rateLimitByIp } from "@/lib/utils/rate-limit";
 
 // ============================================
 // Validation schemas
@@ -78,9 +53,10 @@ export async function signIn(
       return { error: parsed.error.issues[0]?.message ?? "Dati non validi" };
     }
 
-    if (isRateLimited(parsed.data.email)) {
+    const { success: allowed } = await rateLimitByIp("auth", "auth");
+    if (!allowed) {
       logger.warn("Rate limit exceeded for login", { email: parsed.data.email });
-      return { error: "Troppi tentativi. Riprova tra 15 minuti." };
+      return { error: "Troppe richieste. Riprova tra poco." };
     }
 
     const supabase = await createClient();
@@ -119,6 +95,12 @@ export async function signUp(
     const parsed = signUpSchema.safeParse(raw);
     if (!parsed.success) {
       return { error: parsed.error.issues[0]?.message ?? "Dati non validi" };
+    }
+
+    const { success: allowed } = await rateLimitByIp("auth", "auth");
+    if (!allowed) {
+      logger.warn("Rate limit exceeded for register", { email: parsed.data.email });
+      return { error: "Troppe richieste. Riprova tra poco." };
     }
 
     const supabase = await createClient();
@@ -179,6 +161,12 @@ export async function resetPassword(
     const parsed = resetPasswordSchema.safeParse(raw);
     if (!parsed.success) {
       return { error: parsed.error.issues[0]?.message ?? "Dati non validi" };
+    }
+
+    const { success: allowed } = await rateLimitByIp("auth", "auth");
+    if (!allowed) {
+      logger.warn("Rate limit exceeded for reset password");
+      return { error: "Troppe richieste. Riprova tra poco." };
     }
 
     const supabase = await createClient();

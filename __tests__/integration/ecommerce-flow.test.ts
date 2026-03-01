@@ -28,9 +28,11 @@ vi.mock("@/lib/utils/audit", () => ({
 }));
 
 const mockFrom = vi.fn();
+const mockRpc = vi.fn();
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(async () => ({
     from: mockFrom,
+    rpc: mockRpc,
   })),
 }));
 
@@ -91,7 +93,8 @@ describe("E-commerce Flow Integration", () => {
     mockClearCart.mockResolvedValue(undefined);
 
     // 3. Mock Supabase calls
-    // Sequence: products (stock check) → orders (count) → orders (insert) → order_items (insert) → products (stock read+update)
+    // Sequence: products (stock check) → orders (insert) → order_items (insert)
+    // Order number + stock decrement use rpc()
     let fromCallCount = 0;
     mockFrom.mockImplementation((table: string) => {
       fromCallCount++;
@@ -108,11 +111,6 @@ describe("E-commerce Flow Integration", () => {
       }
       if (table === "orders" && fromCallCount === 2) {
         return {
-          select: vi.fn(() => Promise.resolve({ count: 42, error: null })),
-        };
-      }
-      if (table === "orders" && fromCallCount === 3) {
-        return {
           insert: vi.fn(() => ({
             select: vi.fn(() => ({
               single: vi.fn(() =>
@@ -122,24 +120,20 @@ describe("E-commerce Flow Integration", () => {
           })),
         };
       }
-      if (table === "order_items") {
-        return {
-          insert: vi.fn(() => Promise.resolve({ error: null })),
-        };
-      }
-      // Stock update (products again)
+      // order_items
       return {
-        select: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            single: vi.fn(() =>
-              Promise.resolve({ data: { stock_quantity: 10 }, error: null })
-            ),
-          })),
-        })),
-        update: vi.fn(() => ({
-          eq: vi.fn(() => Promise.resolve({ error: null })),
-        })),
+        insert: vi.fn(() => Promise.resolve({ error: null })),
       };
+    });
+
+    // Mock RPCs: generate_order_number then decrement_stock
+    let rpcCallCount = 0;
+    mockRpc.mockImplementation(() => {
+      rpcCallCount++;
+      if (rpcCallCount === 1) {
+        return Promise.resolve({ data: "ORD-001000", error: null });
+      }
+      return Promise.resolve({ data: true, error: null });
     });
 
     const fd = makeFormData({
@@ -155,7 +149,7 @@ describe("E-commerce Flow Integration", () => {
     // Verify success and order number generation
     expect("error" in result).toBe(false);
     if ("orderNumber" in result) {
-      expect(result.orderNumber).toMatch(/^ORD-\d{4}-\d{6}$/);
+      expect(result.orderNumber).toMatch(/^ORD-\d{6}$/);
       expect(result.success).toBe(true);
     }
 

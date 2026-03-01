@@ -592,7 +592,16 @@ export type Database = {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      decrement_stock: {
+        Args: { p_product_id: string; p_quantity: number };
+        Returns: boolean;
+      };
+      generate_order_number: {
+        Args: Record<string, never>;
+        Returns: string;
+      };
+    };
     Enums: Record<string, never>;
   };
 };

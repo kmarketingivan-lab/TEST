@@ -2,6 +2,7 @@
 
 import { addToCart, updateQuantity, removeFromCart, clearCart } from "./cart";
 import { logger } from "@/lib/utils/logger";
+import { rateLimitByIp } from "@/lib/utils/rate-limit";
 
 /**
  * Server action to add a product to the cart.
@@ -19,6 +20,11 @@ export async function addToCartAction(
     if (!productId) return { error: "ID prodotto richiesto" };
     if (quantity < 1 || !Number.isInteger(quantity)) {
       return { error: "La quantità deve essere un intero positivo" };
+    }
+
+    const { success: allowed } = await rateLimitByIp("cart", "default");
+    if (!allowed) {
+      return { error: "Troppe richieste. Riprova tra poco." };
     }
 
     await addToCart(productId, variantId, quantity);

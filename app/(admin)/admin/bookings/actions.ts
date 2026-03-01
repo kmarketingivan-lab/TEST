@@ -314,6 +314,9 @@ export async function createBooking(
       .insert(stripUndefined(parsed.data));
 
     if (error) {
+      if (error.code === "23505") {
+        return { error: "Questo slot è già stato prenotato" };
+      }
       logger.error("Failed to create booking", { error: error.message });
       return { error: "Errore nella creazione della prenotazione" };
     }

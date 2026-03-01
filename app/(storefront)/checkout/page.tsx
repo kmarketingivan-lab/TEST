@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getCart, calculateTotals } from "@/lib/cart/cart";
 import { getCurrentUser } from "@/lib/auth/helpers";
 import { CheckoutForm } from "./checkout-form";
+import { CheckoutButton } from "@/components/storefront/checkout-button";
 
 export default async function CheckoutPage() {
   const items = await getCart();
@@ -62,6 +63,12 @@ export default async function CheckoutPage() {
                 <span>{formatPrice(totals.total)}</span>
               </div>
             </div>
+            <div className="mt-6 flex justify-center">
+              <CheckoutButton />
+            </div>
+            <p className="mt-2 text-center text-xs text-gray-400">
+              Oppure compila il form per un ordine manuale
+            </p>
           </div>
         </div>
       </div>

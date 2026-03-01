@@ -7,6 +7,7 @@ import { stripUndefined } from "@/lib/utils/supabase-helpers";
 import { logAuditEvent } from "@/lib/utils/audit";
 import { logger } from "@/lib/utils/logger";
 import { getCurrentUser } from "@/lib/auth/helpers";
+import { rateLimitByIp } from "@/lib/utils/rate-limit";
 
 /**
  * Create an order from the current cart.
@@ -17,7 +18,7 @@ import { getCurrentUser } from "@/lib/auth/helpers";
  * 4. Verify stock for every item
  * 5. Generate order_number
  * 6. Insert order + items
- * 7. Decrement stock (NOT atomic — see KNOWN_ISSUES.md)
+ * 7. Decrement stock atomically via RPC
  * 8. clearCart()
  * 9. Return {success, orderNumber} or {error}
  *
@@ -28,6 +29,12 @@ export async function createOrder(
   formData: FormData
 ): Promise<{ success: boolean; orderNumber: string } | { error: string }> {
   try {
+    // 0. Rate limit
+    const { success: allowed } = await rateLimitByIp("checkout", "checkout");
+    if (!allowed) {
+      return { error: "Troppe richieste. Riprova tra poco." };
+    }
+
     // 1. Zod validation
     const raw = {
       email: formData.get("email"),
@@ -89,14 +96,12 @@ export async function createOrder(
       }
     }
 
-    // 5. Generate order number
-    const year = new Date().getFullYear();
-    const { count } = await supabase
-      .from("orders")
-      .select("id", { count: "exact", head: true });
-
-    const seq = String((count ?? 0) + 1).padStart(6, "0");
-    const orderNumber = `ORD-${year}-${seq}`;
+    // 5. Generate order number atomically via RPC
+    const { data: orderNumber, error: seqError } = await supabase.rpc("generate_order_number");
+    if (seqError || !orderNumber) {
+      logger.error("Failed to generate order number", { error: seqError?.message });
+      return { error: "Errore nella generazione del numero ordine" };
+    }
 
     // Get current user if authenticated
     const currentUser = await getCurrentUser();
@@ -149,20 +154,18 @@ export async function createOrder(
       return { error: "Errore nel salvataggio degli articoli" };
     }
 
-    // 7. Decrement stock (NOT atomic — see KNOWN_ISSUES.md)
+    // 7. Decrement stock atomically via RPC
     for (const item of totals.items) {
-      const { data: current } = await supabase
-        .from("products")
-        .select("stock_quantity")
-        .eq("id", item.productId)
-        .single();
+      const { data: decremented, error: rpcError } = await supabase
+        .rpc("decrement_stock", { p_product_id: item.productId, p_quantity: item.quantity });
 
-      if (current) {
-        const c = current as { stock_quantity: number };
-        await supabase
-          .from("products")
-          .update({ stock_quantity: c.stock_quantity - item.quantity })
-          .eq("id", item.productId);
+      if (rpcError || decremented === false) {
+        logger.error("Atomic stock decrement failed", {
+          productId: item.productId,
+          quantity: item.quantity,
+          error: rpcError?.message,
+        });
+        return { error: `Prodotto "${item.name}" esaurito` };
       }
     }
 
