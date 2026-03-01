@@ -161,23 +161,23 @@
 ## FASE T5 — Admin Panel (accenti)
 
 ### Task T5.1 — Admin Sidebar
-- [ ] `components/layout/admin-sidebar.tsx`:
+- [x] `components/layout/admin-sidebar.tsx`:
   - Desktop sidebar bg: lascia `bg-white` con `border-r border-neutral-200`
   - Titolo "Admin": `text-neutral-900 font-bold`
   - Nav link attivo: da `bg-blue-50 text-blue-700` a `bg-red-50 text-red-700`
   - Nav link hover: da `hover:bg-gray-100` a `hover:bg-neutral-100`
-- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
+- [x] **Verifica**: `npx tsc --noEmit && npm run build`
 
 ### Task T5.2 — Admin Header
-- [ ] `components/layout/admin-header.tsx`: se ci sono accenti blue, cambia in red-700. Breadcrumb link attivo: `text-red-700`
-- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
+- [x] `components/layout/admin-header.tsx`: se ci sono accenti blue, cambia in red-700. Breadcrumb link attivo: `text-red-700`
+- [x] **Verifica**: `npx tsc --noEmit && npm run build`
 
 ### Task T5.3 — Admin Dashboard
-- [ ] `app/(admin)/admin/page.tsx`: stat cards accenti da blue a red-700. Se ci sono gradient blue, cambiali in `bg-red-700` solido
-- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
+- [x] `app/(admin)/admin/page.tsx`: stat cards accenti da blue a red-700. Se ci sono gradient blue, cambiali in `bg-red-700` solido
+- [x] **Verifica**: `npx tsc --noEmit && npm run build`
 
 ### Task T5.4 — Admin CRUD pages (batch)
-- [ ] In TUTTI i file sotto `app/(admin)/admin/*/`: cerca e sostituisci globalmente:
+- [x] In TUTTI i file sotto `app/(admin)/admin/*/`: cerca e sostituisci globalmente:
   - `text-blue-600` → `text-red-700`
   - `text-blue-700` → `text-red-700`
   - `bg-blue-600` → `bg-red-700`
@@ -193,16 +193,16 @@
   - `border-blue-600` → `border-red-700`
   - `border-blue-500` → `border-red-500`
   - NON toccare `bg-red-600` / `text-red-600` che sono già per danger/error — quelli restano
-- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
+- [x] **Verifica**: `npx tsc --noEmit && npm run build`
 
 ### Task T5.5 — Rich Text Editor
-- [ ] `components/ui/rich-text-editor.tsx`: toolbar accenti da blue a red (bottone attivo `bg-red-100 text-red-700`)
-- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
+- [x] `components/ui/rich-text-editor.tsx`: toolbar accenti da blue a red (bottone attivo `bg-red-100 text-red-700`)
+- [x] **Verifica**: `npx tsc --noEmit && npm run build`
 
 ### Task T5.6 — Media Picker + Image Upload
-- [ ] `components/ui/media-picker.tsx`: accenti blue→red
-- [ ] `components/ui/image-upload.tsx`: drop zone border active da `border-blue-*` a `border-red-500`, testo da `text-blue-*` a `text-red-600`
-- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
+- [x] `components/ui/media-picker.tsx`: accenti blue→red
+- [x] `components/ui/image-upload.tsx`: drop zone border active da `border-blue-*` a `border-red-500`, testo da `text-blue-*` a `text-red-600`
+- [x] **Verifica**: `npx tsc --noEmit && npm run build`
 
 ---
 

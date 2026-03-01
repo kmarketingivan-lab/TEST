@@ -170,7 +170,7 @@ function MediaPicker({ onSelect, accept, open, onClose }: MediaPickerProps) {
                 type="button"
                 onClick={() => setSelectedUrl(m.url)}
                 className={`relative aspect-square overflow-hidden rounded border-2 transition-colors
-                  ${selectedUrl === m.url ? "border-blue-500" : "border-gray-200 hover:border-gray-400"}`}
+                  ${selectedUrl === m.url ? "border-red-500" : "border-neutral-200 hover:border-neutral-400"}`}
               >
                 {m.mime_type.startsWith("image/") ? (
                   <img
@@ -184,7 +184,7 @@ function MediaPicker({ onSelect, accept, open, onClose }: MediaPickerProps) {
                   </div>
                 )}
                 {selectedUrl === m.url && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-blue-500/30">
+                  <div className="absolute inset-0 flex items-center justify-center bg-red-500/30">
                     <Check className="h-6 w-6 text-white" />
                   </div>
                 )}

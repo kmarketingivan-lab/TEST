@@ -51,7 +51,7 @@ function AdminSidebar() {
   const navContent = (
     <nav className="flex flex-col gap-1 p-4">
       <div className="mb-4 px-3 py-2">
-        <h2 className="text-lg font-bold text-gray-900">Admin</h2>
+        <h2 className="text-lg font-bold text-neutral-900">Admin</h2>
       </div>
       {navItems.map((item) => (
         <Link
@@ -61,8 +61,8 @@ function AdminSidebar() {
           className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors
             ${
               isActive(item.href)
-                ? "bg-blue-50 text-blue-700"
-                : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                ? "bg-red-50 text-red-700"
+                : "text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900"
             }`}
         >
           {item.icon}
@@ -102,7 +102,7 @@ function AdminSidebar() {
       </aside>
 
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:border-r lg:border-gray-200 lg:bg-white">
+      <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:border-r lg:border-neutral-200 lg:bg-white">
         {navContent}
       </aside>
     </>

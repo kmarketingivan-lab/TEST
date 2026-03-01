@@ -52,15 +52,15 @@ function AdminHeader({ userEmail }: AdminHeaderProps) {
   const breadcrumbs = getBreadcrumbs(pathname);
 
   return (
-    <header className="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-3">
+    <header className="flex items-center justify-between border-b border-neutral-200 bg-white px-6 py-3">
       <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-sm">
         {breadcrumbs.map((crumb, index) => (
           <span key={crumb.href} className="flex items-center gap-1">
-            {index > 0 && <ChevronRight className="h-4 w-4 text-gray-400" />}
+            {index > 0 && <ChevronRight className="h-4 w-4 text-neutral-400" />}
             {index === breadcrumbs.length - 1 ? (
-              <span className="font-medium text-gray-900">{crumb.label}</span>
+              <span className="font-medium text-red-700">{crumb.label}</span>
             ) : (
-              <Link href={crumb.href} className="text-gray-500 hover:text-gray-700">
+              <Link href={crumb.href} className="text-neutral-500 hover:text-neutral-700">
                 {crumb.label}
               </Link>
             )}
@@ -69,11 +69,11 @@ function AdminHeader({ userEmail }: AdminHeaderProps) {
       </nav>
 
       <div className="flex items-center gap-4">
-        <span className="text-sm text-gray-600">{userEmail}</span>
+        <span className="text-sm text-neutral-600">{userEmail}</span>
         <form action={handleSignOut}>
           <button
             type="submit"
-            className="flex items-center gap-1 rounded-md px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+            className="flex items-center gap-1 rounded-md px-3 py-1.5 text-sm text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 transition-colors"
           >
             <LogOut className="h-4 w-4" />
             Esci

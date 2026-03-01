@@ -140,15 +140,15 @@ function ImageUpload({
         onDrop={handleDrop}
         onClick={() => inputRef.current?.click()}
         className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition-colors
-          ${dragOver ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-gray-400"}`}
+          ${dragOver ? "border-red-500 bg-red-50" : "border-neutral-300 hover:border-neutral-400"}`}
       >
         {uploading ? (
           <>
-            <Upload className="h-8 w-8 animate-bounce text-blue-500" />
+            <Upload className="h-8 w-8 animate-bounce text-red-500" />
             <p className="mt-2 text-sm text-gray-600">Caricamento in corso...</p>
             <div className="mt-2 h-1.5 w-32 overflow-hidden rounded-full bg-gray-200">
               <div
-                className="h-full bg-blue-500 transition-all"
+                className="h-full bg-red-500 transition-all"
                 style={{ width: `${progress}%` }}
               />
             </div>

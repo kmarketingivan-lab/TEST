@@ -44,7 +44,7 @@ function ToolbarButton({ onClick, active, children, title }: ToolbarButtonProps)
       onClick={onClick}
       title={title}
       className={`rounded p-1.5 transition-colors ${
-        active ? "bg-blue-100 text-blue-700" : "text-gray-600 hover:bg-gray-100"
+        active ? "bg-red-100 text-red-700" : "text-neutral-600 hover:bg-neutral-100"
       }`}
     >
       {children}
@@ -68,7 +68,7 @@ function RichTextEditor({ value, onChange, placeholder }: RichTextEditorProps) {
       }),
       LinkExtension.configure({
         openOnClick: false,
-        HTMLAttributes: { class: "text-blue-600 underline" },
+        HTMLAttributes: { class: "text-red-600 underline" },
       }),
     ],
     content: value,

@@ -38,7 +38,7 @@ export default async function AdminDashboardPage() {
         <DashboardCard
           title="Ordini totali"
           value={String(totalOrders)}
-          icon={<ShoppingCart className="h-6 w-6 text-blue-500" />}
+          icon={<ShoppingCart className="h-6 w-6 text-red-500" />}
           href="/admin/orders"
         />
         <DashboardCard
@@ -82,7 +82,7 @@ export default async function AdminDashboardPage() {
         <div className="rounded-lg border border-gray-200 bg-white p-6">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-900">Ultimi ordini</h2>
-            <Link href="/admin/orders" className="text-sm text-blue-600 hover:text-blue-800">
+            <Link href="/admin/orders" className="text-sm text-red-700 hover:text-red-800">
               Vedi tutti
             </Link>
           </div>
@@ -116,7 +116,7 @@ export default async function AdminDashboardPage() {
         <div className="rounded-lg border border-gray-200 bg-white p-6">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-900">Ultime prenotazioni</h2>
-            <Link href="/admin/bookings" className="text-sm text-blue-600 hover:text-blue-800">
+            <Link href="/admin/bookings" className="text-sm text-red-700 hover:text-red-800">
               Vedi tutte
             </Link>
           </div>
