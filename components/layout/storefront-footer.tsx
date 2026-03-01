@@ -46,6 +46,7 @@ function StorefrontFooter({ siteName, contactEmail, contactPhone }: StorefrontFo
             <nav className="mt-3 flex flex-col gap-2 text-sm">
               <Link href="/privacy-policy" className="text-neutral-400 hover:text-white">Privacy Policy</Link>
               <Link href="/terms" className="text-neutral-400 hover:text-white">Termini e Condizioni</Link>
+              <Link href="/cookie-policy" className="text-neutral-400 hover:text-white">Cookie Policy</Link>
               <Link href="/contatti" className="text-neutral-400 hover:text-white">Contatti</Link>
             </nav>
           </div>

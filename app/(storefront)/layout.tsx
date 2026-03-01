@@ -1,5 +1,6 @@
 import { StorefrontHeader } from "@/components/layout/storefront-header";
 import { StorefrontFooter } from "@/components/layout/storefront-footer";
+import { CookieConsent } from "@/components/gdpr/cookie-consent";
 import { getCurrentUser } from "@/lib/auth/helpers";
 import { getCart } from "@/lib/cart/cart";
 
@@ -38,6 +39,7 @@ export default async function StorefrontLayout({
         contactEmail={contactEmail}
         contactPhone={contactPhone}
       />
+      <CookieConsent />
     </div>
   );
 }
