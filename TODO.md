@@ -209,23 +209,23 @@
 ## FASE T6 — Error/Not Found pages + Verifica finale
 
 ### Task T6.1 — Error e 404
-- [ ] `app/error.tsx`: se ci sono accenti blue, cambia in red
-- [ ] `app/not-found.tsx`: link "Torna alla home" in `text-red-600 hover:text-red-700`. Titolo grande
-- [ ] `app/(admin)/admin/login/page.tsx`: form login accenti red, bottone `bg-red-700`
-- [ ] **Verifica**: `npx tsc --noEmit && npm run build`
+- [x] `app/error.tsx`: se ci sono accenti blue, cambia in red
+- [x] `app/not-found.tsx`: link "Torna alla home" in `text-red-600 hover:text-red-700`. Titolo grande
+- [x] `app/(admin)/admin/login/page.tsx`: form login accenti red, bottone `bg-red-700`
+- [x] **Verifica**: `npx tsc --noEmit && npm run build`
 
 ### Task T6.2 — Grep finale blue residui
-- [ ] Esegui: `Get-ChildItem -Recurse -Include *.tsx,*.css | Where-Object { $_.FullName -notmatch "node_modules|\.next|\.git" } | Select-String "blue-" | Select-Object Filename, LineNumber, Line`
-- [ ] Se ci sono residui blue nei file UI (non test, non lib/), fixali
-- [ ] I file in `__tests__/`, `lib/dal/`, `lib/auth/`, `lib/cart/`, `lib/checkout/`, `lib/validators/`, `lib/utils/`, `lib/supabase/`, `types/` NON vanno toccati
-- [ ] **Verifica**: `npx tsc --noEmit && npm run build && npm run test:run` — TUTTO verde
+- [x] Esegui: `Get-ChildItem -Recurse -Include *.tsx,*.css | Where-Object { $_.FullName -notmatch "node_modules|\.next|\.git" } | Select-String "blue-" | Select-Object Filename, LineNumber, Line`
+- [x] Se ci sono residui blue nei file UI (non test, non lib/), fixali
+- [x] I file in `__tests__/`, `lib/dal/`, `lib/auth/`, `lib/cart/`, `lib/checkout/`, `lib/validators/`, `lib/utils/`, `lib/supabase/`, `types/` NON vanno toccati
+- [x] **Verifica**: `npx tsc --noEmit && npm run build && npm run test:run` — TUTTO verde
 
 ### Task T6.3 — Build finale
-- [ ] `npx tsc --noEmit` — ZERO errori
-- [ ] `npm run build` — ZERO errori
-- [ ] `npm run test:run` — ZERO fallimenti (178 test)
-- [ ] Committa: `feat: apply Palmetto theme — red/gold/black palette`
-- [ ] **Verifica**: tutti i comandi passano
+- [x] `npx tsc --noEmit` — ZERO errori
+- [x] `npm run build` — ZERO errori
+- [x] `npm run test:run` — ZERO fallimenti (178 test)
+- [x] Committa: `feat: apply Palmetto theme — red/gold/black palette`
+- [x] **Verifica**: tutti i comandi passano
 
 ---
 

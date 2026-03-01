@@ -13,7 +13,7 @@ export default function RegisterPage() {
       </div>
       <p className="mt-6 text-center text-sm text-gray-500">
         Hai già un account?{" "}
-        <Link href="/auth/login" className="font-medium text-blue-600 hover:text-blue-700">
+        <Link href="/auth/login" className="font-medium text-red-600 hover:text-red-700">
           Accedi
         </Link>
       </p>

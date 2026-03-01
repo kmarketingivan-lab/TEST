@@ -14,12 +14,12 @@ export default function LoginPage() {
       <div className="mt-6 space-y-2 text-center text-sm">
         <p className="text-gray-500">
           Non hai un account?{" "}
-          <Link href="/auth/register" className="font-medium text-blue-600 hover:text-blue-700">
+          <Link href="/auth/register" className="font-medium text-red-600 hover:text-red-700">
             Registrati
           </Link>
         </p>
         <p className="text-gray-500">
-          <Link href="/auth/reset-password" className="font-medium text-blue-600 hover:text-blue-700">
+          <Link href="/auth/reset-password" className="font-medium text-red-600 hover:text-red-700">
             Password dimenticata?
           </Link>
         </p>
