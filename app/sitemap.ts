@@ -65,7 +65,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const { data: products } = await supabase
     .from("products")
     .select("slug, updated_at")
-    .eq("active", true);
+    .eq("is_active", true);
 
   const productPages: MetadataRoute.Sitemap = (products ?? []).map((p) => ({
     url: `${baseUrl}/products/${p.slug}`,
@@ -74,11 +74,37 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
+  // Dynamic: active categories
+  const { data: categories } = await supabase
+    .from("categories")
+    .select("slug, updated_at")
+    .eq("is_active", true);
+
+  const categoryPages: MetadataRoute.Sitemap = (categories ?? []).map((cat) => ({
+    url: `${baseUrl}/products?category=${cat.slug}`,
+    lastModified: cat.updated_at ? new Date(cat.updated_at) : undefined,
+    changeFrequency: "weekly" as const,
+    priority: 0.7,
+  }));
+
+  // Dynamic: active brands
+  const { data: brands } = await supabase
+    .from("brands")
+    .select("slug, created_at")
+    .eq("is_active", true);
+
+  const brandPages: MetadataRoute.Sitemap = (brands ?? []).map((brand) => ({
+    url: `${baseUrl}/products?brand=${brand.slug}`,
+    lastModified: brand.created_at ? new Date(brand.created_at) : undefined,
+    changeFrequency: "monthly" as const,
+    priority: 0.6,
+  }));
+
   // Dynamic: published blog posts
   const { data: posts } = await supabase
     .from("blog_posts")
-    .select("slug, updated_at")
-    .eq("published", true);
+    .select("slug, updated_at, tags")
+    .eq("is_published", true);
 
   const blogPages: MetadataRoute.Sitemap = (posts ?? []).map((post) => ({
     url: `${baseUrl}/blog/${post.slug}`,
@@ -87,11 +113,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
+  // Blog tag pages (deduplicated)
+  const allTags = new Set<string>();
+  (posts ?? []).forEach((post) => {
+    if (post.tags) {
+      post.tags.forEach((tag: string) => allTags.add(tag));
+    }
+  });
+  const tagPages: MetadataRoute.Sitemap = Array.from(allTags).map((tag) => ({
+    url: `${baseUrl}/blog?tag=${encodeURIComponent(tag)}`,
+    changeFrequency: "weekly" as const,
+    priority: 0.5,
+  }));
+
   // Dynamic: published custom pages
   const { data: pages } = await supabase
     .from("pages")
     .select("slug, updated_at")
-    .eq("published", true);
+    .eq("is_published", true);
 
   const customPages: MetadataRoute.Sitemap = (pages ?? []).map((page) => ({
     url: `${baseUrl}/${page.slug}`,
@@ -100,5 +139,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.5,
   }));
 
-  return [...staticPages, ...productPages, ...blogPages, ...customPages];
+  return [
+    ...staticPages,
+    ...productPages,
+    ...categoryPages,
+    ...brandPages,
+    ...blogPages,
+    ...tagPages,
+    ...customPages,
+  ];
 }

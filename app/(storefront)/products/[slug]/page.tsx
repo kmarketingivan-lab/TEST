@@ -2,9 +2,21 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { getProductBySlug, getRelatedProducts } from "@/lib/dal/products";
-import { RichTextDisplay } from "@/components/ui/rich-text-display";
+import { getProductReviews, getReviewStats } from "@/lib/dal/reviews";
+import { isInWishlist } from "@/lib/dal/wishlists";
+import { getCurrentUser } from "@/lib/auth/helpers";
+import { createClient } from "@/lib/supabase/server";
 import { ProductCard, formatPrice } from "@/components/storefront/product-card";
-import { AddToCartButton } from "@/components/storefront/add-to-cart-button";
+import { ProductGallery } from "@/components/storefront/product-gallery";
+import { StockBadge } from "@/components/storefront/stock-badge";
+import { ProductTabs } from "@/components/storefront/product-tabs";
+import { WishlistButton } from "@/components/storefront/wishlist-button";
+import { ShareButtons } from "@/components/storefront/share-buttons";
+import { ProductDetailClient } from "./product-detail-client";
+import { JsonLdScript } from "@/components/seo/json-ld-script";
+import { generateProductSchema, generateBreadcrumbSchema } from "@/lib/seo/json-ld";
+import { generateCanonicalUrl } from "@/lib/seo/metadata";
+import type { Category } from "@/types/database";
 
 interface ProductDetailPageProps {
   params: Promise<{ slug: string }>;
@@ -15,9 +27,40 @@ export async function generateMetadata({ params }: ProductDetailPageProps): Prom
   const product = await getProductBySlug(slug);
   if (!product) return { title: "Prodotto non trovato" };
 
+  const title = product.seo_title ?? product.name;
+  const description = product.seo_description ?? product.description ?? undefined;
+  const canonical = generateCanonicalUrl(`/products/${slug}`);
+  const primaryImage = product.product_images.find((img) => img.is_primary)
+    ?? [...product.product_images].sort((a, b) => a.sort_order - b.sort_order)[0];
+
   return {
-    title: product.seo_title ?? product.name,
-    description: product.seo_description ?? product.description ?? undefined,
+    title,
+    description,
+    alternates: {
+      canonical,
+    },
+    openGraph: {
+      title,
+      description,
+      url: canonical,
+      type: "website",
+      ...(primaryImage
+        ? {
+            images: [
+              {
+                url: primaryImage.url,
+                alt: primaryImage.alt_text ?? product.name,
+              },
+            ],
+          }
+        : {}),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      ...(primaryImage ? { images: [primaryImage.url] } : {}),
+    },
   };
 }
 
@@ -27,62 +70,82 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
 
   if (!product || !product.is_active) notFound();
 
-  const images = product.product_images;
   const variants = product.product_variants.filter((v) => v.is_active);
-  const sortedImages = [...images].sort((a, b) => a.sort_order - b.sort_order);
 
-  const related = await getRelatedProducts(product.id, product.category_id, 4);
+  // Fetch data in parallel
+  const [related, reviewData, reviewStats, user] = await Promise.all([
+    getRelatedProducts(product.id, product.category_id, 4),
+    getProductReviews(product.id, { page: 1, perPage: 10 }),
+    getReviewStats(product.id),
+    getCurrentUser(),
+  ]);
+
+  // Check wishlist status
+  const inWishlist = user ? await isInWishlist(user.id, product.id) : false;
+
+  // Get category for breadcrumb
+  let category: Category | null = null;
+  if (product.category_id) {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("categories")
+      .select("*")
+      .eq("id", product.category_id)
+      .single();
+    category = (data as Category | null) ?? null;
+  }
 
   const hasDiscount =
     product.compare_at_price !== null && product.compare_at_price > product.price;
 
+  const productUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/products/${product.slug}`;
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <JsonLdScript
+        data={generateProductSchema(
+          {
+            ...product,
+            images: product.product_images.map((img) => ({
+              url: img.url,
+              alt_text: img.alt_text,
+            })),
+          },
+          reviewData.data
+        )}
+      />
+      <JsonLdScript
+        data={generateBreadcrumbSchema([
+          { name: "Home", url: "/" },
+          { name: "Catalogo", url: "/products" },
+          ...(category
+            ? [{ name: category.name, url: `/products?category=${category.slug}` }]
+            : []),
+          { name: product.name, url: `/products/${product.slug}` },
+        ])}
+      />
       {/* Breadcrumb */}
       <nav className="mb-6 text-sm text-gray-500">
         <Link href="/" className="hover:text-gray-700">Home</Link>
         <span className="mx-2">/</span>
         <Link href="/products" className="hover:text-gray-700">Catalogo</Link>
+        {category && (
+          <>
+            <span className="mx-2">/</span>
+            <Link href={`/products?category=${category.slug}`} className="hover:text-gray-700">
+              {category.name}
+            </Link>
+          </>
+        )}
         <span className="mx-2">/</span>
         <span className="text-gray-900">{product.name}</span>
       </nav>
 
       <div className="grid gap-8 lg:grid-cols-2">
-        {/* Image gallery */}
-        <div className="space-y-4">
-          {sortedImages.length > 0 ? (
-            <>
-              <div className="aspect-square overflow-hidden rounded-lg bg-gray-100">
-                <img
-                  src={sortedImages[0]?.url}
-                  alt={sortedImages[0]?.alt_text ?? product.name}
-                  className="h-full w-full object-cover"
-                />
-              </div>
-              {sortedImages.length > 1 && (
-                <div className="grid grid-cols-4 gap-2">
-                  {sortedImages.slice(1).map((img) => (
-                    <div key={img.id} className="aspect-square overflow-hidden rounded-lg bg-gray-100">
-                      <img
-                        src={img.url}
-                        alt={img.alt_text ?? product.name}
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="flex aspect-square items-center justify-center rounded-lg bg-gray-100 text-gray-400">
-              <svg className="h-24 w-24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </div>
-          )}
-        </div>
+        {/* Left: Gallery */}
+        <ProductGallery images={product.product_images} productName={product.name} />
 
-        {/* Product info */}
+        {/* Right: Product info */}
         <div className="space-y-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">{product.name}</h1>
@@ -103,57 +166,49 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
             )}
           </div>
 
-          {/* Stock info */}
-          <div className="text-sm">
-            {product.stock_quantity > 0 ? (
-              <span className="text-green-600">
-                Disponibile ({product.stock_quantity} in magazzino)
-              </span>
-            ) : (
-              <span className="text-red-600">Esaurito</span>
-            )}
-          </div>
+          {/* Stock badge */}
+          <StockBadge
+            stockQuantity={product.stock_quantity}
+            lowStockThreshold={product.low_stock_threshold ?? undefined}
+          />
 
           {/* Description */}
           {product.description && (
             <p className="text-gray-700">{product.description}</p>
           )}
 
-          {/* Variants */}
-          {variants.length > 0 && (
-            <div>
-              <h3 className="text-sm font-medium text-gray-900">Varianti</h3>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {variants.map((v) => (
-                  <span
-                    key={v.id}
-                    className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700"
-                  >
-                    {v.name}
-                    {v.price_adjustment !== 0 && (
-                      <span className="ml-1 text-gray-500">
-                        ({v.price_adjustment > 0 ? "+" : ""}{formatPrice(v.price_adjustment)})
-                      </span>
-                    )}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Client interactive section: variants + quantity + add to cart */}
+          <ProductDetailClient
+            productId={product.id}
+            basePrice={product.price}
+            stockQuantity={product.stock_quantity}
+            variants={variants}
+          />
 
-          {/* Add to cart */}
-          {product.stock_quantity > 0 && (
-            <AddToCartButton productId={product.id} variantId={null} quantity={1} />
-          )}
-
-          {/* Rich description */}
-          {product.rich_description && (
-            <div className="border-t border-gray-200 pt-6">
-              <h3 className="mb-4 text-lg font-semibold text-gray-900">Dettagli</h3>
-              <RichTextDisplay html={product.rich_description} />
-            </div>
-          )}
+          {/* Wishlist + Share */}
+          <div className="flex flex-wrap items-center gap-3">
+            <WishlistButton
+              productId={product.id}
+              isInWishlist={inWishlist}
+              isLoggedIn={user !== null}
+            />
+            <ShareButtons url={productUrl} title={product.name} />
+          </div>
         </div>
+      </div>
+
+      {/* Tabs: Description, Specs, Regulatory, Reviews */}
+      <div className="mt-12">
+        <ProductTabs
+          richDescription={product.rich_description}
+          specifications={product.specifications}
+          regulatoryInfo={product.regulatory_info}
+          productId={product.id}
+          reviews={reviewData.data}
+          reviewStats={reviewStats}
+          reviewTotalCount={reviewData.count}
+          isLoggedIn={user !== null}
+        />
       </div>
 
       {/* Related products */}

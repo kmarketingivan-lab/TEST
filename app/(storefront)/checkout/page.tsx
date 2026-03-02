@@ -26,7 +26,11 @@ export default async function CheckoutPage() {
       <div className="mt-8 grid gap-8 lg:grid-cols-3">
         {/* Form */}
         <div className="lg:col-span-2">
-          <CheckoutForm userEmail={user?.email ?? ""} />
+          <CheckoutForm
+            userEmail={user?.email ?? ""}
+            userName=""
+            isLoggedIn={!!user}
+          />
         </div>
 
         {/* Order summary */}
@@ -48,16 +52,20 @@ export default async function CheckoutPage() {
                 <span>Subtotale</span>
                 <span>{formatPrice(totals.subtotal)}</span>
               </div>
+              {(totals.discount ?? 0) > 0 && (
+                <div className="flex justify-between text-sm text-green-600">
+                  <span>Sconto</span>
+                  <span>-{formatPrice(totals.discount ?? 0)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-sm text-gray-600">
                 <span>IVA</span>
                 <span>{formatPrice(totals.tax)}</span>
               </div>
-              {totals.shipping > 0 && (
-                <div className="flex justify-between text-sm text-gray-600">
-                  <span>Spedizione</span>
-                  <span>{formatPrice(totals.shipping)}</span>
-                </div>
-              )}
+              <div className="flex justify-between text-sm text-gray-600">
+                <span>Spedizione</span>
+                <span>{totals.shipping > 0 ? formatPrice(totals.shipping) : "Gratuita"}</span>
+              </div>
               <div className="flex justify-between border-t border-gray-200 pt-2 text-lg font-bold text-gray-900">
                 <span>Totale</span>
                 <span>{formatPrice(totals.total)}</span>

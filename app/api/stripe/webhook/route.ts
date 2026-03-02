@@ -3,7 +3,6 @@ import { stripe } from "@/lib/stripe/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logAuditEvent } from "@/lib/utils/audit";
 import { logger } from "@/lib/utils/logger";
-import { stripUndefined } from "@/lib/utils/supabase-helpers";
 import type Stripe from "stripe";
 
 export const runtime = "nodejs";
@@ -50,6 +49,10 @@ export async function POST(request: Request) {
       logger.info("Checkout session expired", { sessionId: session.id });
       break;
     }
+    case "charge.refunded": {
+      await handleChargeRefunded(event.data.object as Stripe.Charge);
+      break;
+    }
     default:
       logger.info("Unhandled webhook event", { type: event.type });
   }
@@ -68,15 +71,49 @@ async function handleCheckoutCompleted(
 
     const supabase = createAdminClient();
     const userId = fullSession.metadata?.user_id || null;
+    const paymentIntentId = fullSession.payment_intent as string | null;
 
-    // Generate order number
-    const year = new Date().getFullYear();
-    const { count } = await supabase
-      .from("orders")
-      .select("id", { count: "exact", head: true });
+    // --- IDEMPOTENCY CHECK ---
+    if (paymentIntentId) {
+      const { data: existingOrder } = await supabase
+        .from("orders")
+        .select("id, order_number")
+        .eq("stripe_payment_intent_id", paymentIntentId)
+        .maybeSingle();
 
-    const seq = String((count ?? 0) + 1).padStart(6, "0");
-    const orderNumber = `ORD-${year}-${seq}`;
+      if (existingOrder) {
+        logger.info("Webhook: duplicate event, order already exists", {
+          orderNumber: existingOrder.order_number,
+          paymentIntentId,
+          sessionId: session.id,
+        });
+        return;
+      }
+    }
+
+    // --- PARSE CART_HASH FOR PRODUCT IDS ---
+    const cartHash = fullSession.metadata?.cart_hash;
+    let cartEntries: Array<{ productId: string; variantId: string | null; qty: number }> = [];
+    if (cartHash) {
+      try {
+        const raw = JSON.parse(cartHash) as string[];
+        cartEntries = raw
+          .map((entry) => {
+            const parts = entry.split(":");
+            const productId = parts[0] ?? "";
+            const variantId = parts[1] ?? null;
+            const qtyStr = parts[2] ?? "0";
+            return {
+              productId,
+              variantId: variantId || null,
+              qty: parseInt(qtyStr, 10) || 0,
+            };
+          })
+          .filter((e) => e.productId && e.qty > 0);
+      } catch {
+        logger.warn("Webhook: failed to parse cart_hash", { sessionId: session.id });
+      }
+    }
 
     // Build shipping address from Stripe collected_information
     const shippingDetails = fullSession.collected_information?.shipping_details;
@@ -93,100 +130,101 @@ async function handleCheckoutCompleted(
     // Calculate totals from Stripe (amounts are in cents)
     const total = (fullSession.amount_total ?? 0) / 100;
     const subtotal = (fullSession.amount_subtotal ?? 0) / 100;
-    const tax = total - subtotal;
+    const discount = fullSession.total_details?.amount_discount
+      ? fullSession.total_details.amount_discount / 100
+      : 0;
+    const tax = Math.max(0, total - subtotal + discount);
 
-    // Insert order
-    const orderData = stripUndefined({
-      order_number: orderNumber,
+    // Build order items with product IDs from cart_hash
+    const lineItems = fullSession.line_items?.data ?? [];
+    const productLineItems = lineItems.filter((li) => li.description !== "Spedizione");
+    const orderItems = productLineItems.map((li, index) => {
+      const cartEntry = cartEntries[index];
+      return {
+        product_id: cartEntry?.productId ?? null,
+        variant_id: cartEntry?.variantId ?? null,
+        product_name: li.description ?? "Prodotto",
+        variant_name: null,
+        quantity: li.quantity ?? 1,
+        unit_price: (li.price?.unit_amount ?? 0) / 100,
+        total_price: (li.amount_total ?? 0) / 100,
+      };
+    });
+
+    // --- ATOMIC ORDER CREATION ---
+    const rpcParams = {
       user_id: userId || null,
       email: fullSession.customer_details?.email ?? "",
-      status: "confirmed" as const,
+      status: "confirmed",
       subtotal,
       tax,
       shipping: 0,
-      discount: 0,
+      discount,
       total,
       shipping_address: shippingAddress,
       billing_address: shippingAddress,
-      notes: null as string | null,
-      stripe_session_id: fullSession.id,
-    });
+      notes: null,
+      stripe_payment_intent_id: paymentIntentId,
+      coupon_id: null,
+      coupon_code: fullSession.metadata?.coupon_code || null,
+      coupon_discount: discount,
+      items: orderItems,
+    };
 
-    const { data: order, error: orderError } = await supabase
-      .from("orders")
-      .insert(orderData)
-      .select("id")
-      .single();
+    const { data: rpcResult, error: rpcError } = await supabase.rpc(
+      "create_order_atomic",
+      { p_params: rpcParams }
+    );
 
-    if (orderError) {
-      logger.error("Webhook: failed to create order", {
-        error: orderError.message,
+    if (rpcError) {
+      // Unique constraint violation = duplicate payment_intent (idempotency fallback)
+      if (rpcError.message?.includes("duplicate") || rpcError.code === "23505") {
+        logger.info("Webhook: duplicate payment intent caught by DB constraint", {
+          paymentIntentId,
+          sessionId: session.id,
+        });
+        return;
+      }
+      logger.error("Webhook: atomic order creation failed", {
+        error: rpcError.message,
         sessionId: session.id,
       });
       return;
     }
 
-    // Insert order items from Stripe line items
-    const lineItems = fullSession.line_items?.data ?? [];
-    const orderItems = lineItems.map((li) => ({
-      order_id: order.id as string,
-      product_id: null as string | null,
-      variant_id: null as string | null,
-      product_name: li.description ?? "Prodotto",
-      variant_name: null as string | null,
-      quantity: li.quantity ?? 1,
-      unit_price: (li.price?.unit_amount ?? 0) / 100,
-      total_price: (li.amount_total ?? 0) / 100,
-    }));
+    const result = rpcResult as { order_id: string; order_number: string };
+    const orderId = result.order_id;
+    const orderNumber = result.order_number;
 
-    if (orderItems.length > 0) {
-      const { error: itemsError } = await supabase
-        .from("order_items")
-        .insert(orderItems);
-
-      if (itemsError) {
-        logger.error("Webhook: failed to insert order items", {
-          error: itemsError.message,
-          orderId: order.id,
-        });
-      }
-    }
-
-    // Decrement stock — parse cart_hash from metadata
+    // Try to send confirmation email
     try {
-      const cartHash = fullSession.metadata?.cart_hash;
-      if (cartHash) {
-        const cartEntries = JSON.parse(cartHash) as string[];
-        for (const entry of cartEntries) {
-          const [productId, , qtyStr] = entry.split(":");
-          if (!productId || !qtyStr) continue;
-          const qty = parseInt(qtyStr, 10);
-          if (isNaN(qty) || qty <= 0) continue;
-
-          const { data: current } = await supabase
-            .from("products")
-            .select("stock_quantity")
-            .eq("id", productId)
-            .single();
-
-          if (current) {
-            const c = current as { stock_quantity: number };
-            await supabase
-              .from("products")
-              .update({ stock_quantity: Math.max(0, c.stock_quantity - qty) })
-              .eq("id", productId);
-          }
+      const { sendOrderConfirmation } = await import("@/lib/email/send");
+      const orderForEmail = {
+        ...rpcParams,
+        id: orderId,
+        order_number: orderNumber,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      await sendOrderConfirmation(
+        orderForEmail as unknown as Parameters<typeof sendOrderConfirmation>[0],
+        orderItems.map((oi) => ({
+          ...oi,
+          id: "",
+          order_id: orderId,
+          created_at: new Date().toISOString(),
+        })) as Parameters<typeof sendOrderConfirmation>[1],
+        {
+          email: fullSession.customer_details?.email ?? "",
+          name: fullSession.customer_details?.name ?? "",
         }
-      }
-    } catch (stockErr) {
-      logger.error("Webhook: failed to decrement stock", {
-        error: stockErr instanceof Error ? stockErr.message : "Unknown",
-        sessionId: session.id,
-      });
+      );
+    } catch {
+      // Email service not available or failed, continue
     }
 
     // Audit log
-    await logAuditEvent(userId, "create", "order", order.id as string, undefined, {
+    await logAuditEvent(userId, "create", "order", orderId, undefined, {
       order_number: orderNumber,
       total,
       stripe_session_id: fullSession.id,
@@ -200,6 +238,83 @@ async function handleCheckoutCompleted(
     logger.error("Webhook: handleCheckoutCompleted error", {
       error: err instanceof Error ? err.message : "Unknown",
       sessionId: session.id,
+    });
+  }
+}
+
+async function handleChargeRefunded(charge: Stripe.Charge) {
+  try {
+    const supabase = createAdminClient();
+    const paymentIntentId =
+      typeof charge.payment_intent === "string"
+        ? charge.payment_intent
+        : charge.payment_intent?.id ?? null;
+
+    if (!paymentIntentId) {
+      logger.warn("Webhook: charge.refunded missing payment_intent", {
+        chargeId: charge.id,
+      });
+      return;
+    }
+
+    // Look up order by stripe_payment_intent_id
+    const { data: order, error: lookupError } = await supabase
+      .from("orders")
+      .select("id, order_number, status, user_id")
+      .eq("stripe_payment_intent_id", paymentIntentId)
+      .maybeSingle();
+
+    if (lookupError || !order) {
+      logger.warn("Webhook: no order found for refunded payment_intent", {
+        paymentIntentId,
+        chargeId: charge.id,
+        error: lookupError?.message,
+      });
+      return;
+    }
+
+    // Full refund: update status. Partial: only audit log.
+    const isFullRefund = charge.amount_captured === charge.amount_refunded;
+
+    if (isFullRefund) {
+      const { error: updateError } = await supabase
+        .from("orders")
+        .update({ status: "refunded" })
+        .eq("id", order.id);
+
+      if (updateError) {
+        logger.error("Webhook: failed to update order status to refunded", {
+          orderId: order.id,
+          error: updateError.message,
+        });
+        return;
+      }
+    }
+
+    // Audit log
+    await logAuditEvent(
+      order.user_id,
+      "refund",
+      "order",
+      order.id as string,
+      { status: order.status },
+      {
+        status: isFullRefund ? "refunded" : order.status,
+        charge_id: charge.id,
+        amount_refunded: charge.amount_refunded / 100,
+        is_full_refund: isFullRefund,
+      }
+    );
+
+    logger.info("Webhook: charge refunded processed", {
+      orderNumber: order.order_number,
+      chargeId: charge.id,
+      isFullRefund,
+    });
+  } catch (err) {
+    logger.error("Webhook: handleChargeRefunded error", {
+      error: err instanceof Error ? err.message : "Unknown",
+      chargeId: charge.id,
     });
   }
 }

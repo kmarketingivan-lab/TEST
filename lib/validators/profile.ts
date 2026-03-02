@@ -29,5 +29,17 @@ export const adminProfileUpdateSchema = profileSchema.extend({
   role: roleEnum,
 });
 
+export const changePasswordSchema = z
+  .object({
+    current_password: z.string().min(1, "Inserisci la password attuale"),
+    new_password: z.string().min(8, "La nuova password deve avere almeno 8 caratteri"),
+    confirm_password: z.string().min(1, "Conferma la nuova password"),
+  })
+  .refine((data) => data.new_password === data.confirm_password, {
+    message: "Le password non coincidono",
+    path: ["confirm_password"],
+  });
+
 export type ProfileInput = z.infer<typeof profileSchema>;
 export type AdminProfileUpdateInput = z.infer<typeof adminProfileUpdateSchema>;
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;

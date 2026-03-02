@@ -22,6 +22,7 @@ export interface CartItemWithPrice extends CartItem {
   name: string;
   price: number;
   total: number;
+  stock?: number;
 }
 
 /**
@@ -32,5 +33,8 @@ export interface CartWithPrices {
   subtotal: number;
   tax: number;
   shipping: number;
+  discount?: number;
   total: number;
+  couponCode?: string | null;
+  couponLabel?: string | null;
 }

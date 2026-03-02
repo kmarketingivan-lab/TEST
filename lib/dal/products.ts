@@ -1,20 +1,29 @@
 import { createClient } from "@/lib/supabase/server";
-import type { Product, ProductImage, ProductVariant } from "@/types/database";
+import type { Product, ProductImage, ProductVariant, Brand } from "@/types/database";
 
-/** Product with related images and variants. */
+/** Product with related images, variants, and brand. */
 export type ProductWithRelations = Product & {
   product_images: ProductImage[];
   product_variants: ProductVariant[];
+  brands: Brand | null;
 };
+
+const PRODUCT_WITH_RELATIONS_SELECT =
+  "*, product_images(id,url,alt_text,sort_order,is_primary), brands(id,name,slug,logo_url)";
 
 interface GetProductsOptions {
   page?: number;
   perPage?: number;
   categoryId?: string;
+  brandId?: string;
   search?: string;
   sortBy?: "name" | "price" | "created_at";
   sortOrder?: "asc" | "desc";
   isActive?: boolean;
+  minPrice?: number;
+  maxPrice?: number;
+  inStock?: boolean;
+  hasDiscount?: boolean;
 }
 
 interface PaginatedResult {
@@ -24,8 +33,7 @@ interface PaginatedResult {
 
 /**
  * Get products with pagination, filtering, and sorting.
- * @param options - Filtering and pagination options
- * @returns Paginated product list with total count
+ * Joins product_images and brands.
  */
 export async function getProducts(
   options: GetProductsOptions = {}
@@ -34,10 +42,15 @@ export async function getProducts(
     page = 1,
     perPage = 20,
     categoryId,
+    brandId,
     search,
     sortBy = "created_at",
     sortOrder = "desc",
     isActive,
+    minPrice,
+    maxPrice,
+    inStock,
+    hasDiscount,
   } = options;
 
   const supabase = await createClient();
@@ -46,7 +59,7 @@ export async function getProducts(
 
   let query = supabase
     .from("products")
-    .select("*", { count: "exact" });
+    .select(PRODUCT_WITH_RELATIONS_SELECT, { count: "exact" });
 
   if (isActive !== undefined) {
     query = query.eq("is_active", isActive);
@@ -56,8 +69,28 @@ export async function getProducts(
     query = query.eq("category_id", categoryId);
   }
 
+  if (brandId) {
+    query = query.eq("brand_id", brandId);
+  }
+
   if (search) {
     query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%`);
+  }
+
+  if (minPrice !== undefined) {
+    query = query.gte("price", minPrice);
+  }
+
+  if (maxPrice !== undefined) {
+    query = query.lte("price", maxPrice);
+  }
+
+  if (inStock) {
+    query = query.gt("stock_quantity", 0);
+  }
+
+  if (hasDiscount) {
+    query = query.not("compare_at_price", "is", null);
   }
 
   query = query.order(sortBy, { ascending: sortOrder === "asc" });
@@ -70,22 +103,20 @@ export async function getProducts(
   }
 
   return {
-    data: (data ?? []) as Product[],
+    data: (data ?? []) as unknown as Product[],
     count: count ?? 0,
   };
 }
 
 /**
- * Get a single product by slug, including images and variants.
- * @param slug - The product slug
- * @returns Product with images and variants, or null
+ * Get a single product by slug, including images, variants, and brand.
  */
 export async function getProductBySlug(slug: string): Promise<ProductWithRelations | null> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
     .from("products")
-    .select("*, product_images(*), product_variants(*)")
+    .select("*, product_images(*), product_variants(*), brands(id,name,slug,logo_url)")
     .eq("slug", slug)
     .single();
 
@@ -99,8 +130,6 @@ export async function getProductBySlug(slug: string): Promise<ProductWithRelatio
 
 /**
  * Get a single product by ID.
- * @param id - The product UUID
- * @returns Product or null
  */
 export async function getProductById(id: string) {
   const supabase = await createClient();
@@ -120,31 +149,42 @@ export async function getProductById(id: string) {
 }
 
 /**
- * Get featured active products.
- * @param limit - Max number of results
- * @returns Array of featured products
+ * Get featured active products with images and brands.
  */
 export async function getFeaturedProducts(limit = 8): Promise<Product[]> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
     .from("products")
-    .select("*")
+    .select(PRODUCT_WITH_RELATIONS_SELECT)
     .eq("is_active", true)
     .eq("is_featured", true)
     .order("created_at", { ascending: false })
     .limit(limit);
 
   if (error) throw error;
-  return (data ?? []) as Product[];
+  return (data ?? []) as unknown as Product[];
 }
 
 /**
- * Get related products (same category, excluding current).
- * @param productId - Current product ID to exclude
- * @param categoryId - Category to filter by
- * @param limit - Max number of results
- * @returns Array of related products
+ * Get newest active products with images.
+ */
+export async function getNewProducts(limit = 8): Promise<Product[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("products")
+    .select(PRODUCT_WITH_RELATIONS_SELECT)
+    .eq("is_active", true)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return (data ?? []) as unknown as Product[];
+}
+
+/**
+ * Get related products (same category, excluding current) with images.
  */
 export async function getRelatedProducts(
   productId: string,
@@ -155,7 +195,7 @@ export async function getRelatedProducts(
 
   let query = supabase
     .from("products")
-    .select("*")
+    .select("*, product_images(id,url,alt_text,sort_order,is_primary)")
     .eq("is_active", true)
     .neq("id", productId)
     .limit(limit);
@@ -167,14 +207,11 @@ export async function getRelatedProducts(
   const { data, error } = await query;
 
   if (error) throw error;
-  return (data ?? []) as Product[];
+  return (data ?? []) as unknown as Product[];
 }
 
 /**
- * Search products by name/description.
- * @param queryStr - Search query string
- * @param limit - Max results
- * @returns Matching products
+ * Search products by name/description with images.
  */
 export async function searchProducts(
   queryStr: string,
@@ -184,11 +221,11 @@ export async function searchProducts(
 
   const { data, error } = await supabase
     .from("products")
-    .select("*")
+    .select("*, product_images(id,url,alt_text,sort_order,is_primary)")
     .eq("is_active", true)
     .or(`name.ilike.%${queryStr}%,description.ilike.%${queryStr}%`)
     .limit(limit);
 
   if (error) throw error;
-  return (data ?? []) as Product[];
+  return (data ?? []) as unknown as Product[];
 }

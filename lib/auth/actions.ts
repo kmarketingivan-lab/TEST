@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { logger } from "@/lib/utils/logger";
 import { rateLimitByIp } from "@/lib/utils/rate-limit";
+import { sendWelcomeEmail } from "@/lib/email/send";
 
 // ============================================
 // Validation schemas
@@ -27,6 +28,11 @@ const resetPasswordSchema = z.object({
 
 const updatePasswordSchema = z.object({
   password: z.string().min(8, "Password minimo 8 caratteri"),
+});
+
+const changePasswordSchema = z.object({
+  current_password: z.string().min(1, "Inserisci la password attuale"),
+  new_password: z.string().min(8, "La nuova password deve avere almeno 8 caratteri"),
 });
 
 // ============================================
@@ -118,6 +124,9 @@ export async function signUp(
       logger.warn("Sign up failed", { email: parsed.data.email, error: error.message });
       return { error: "Errore nella registrazione. L'email potrebbe essere già in uso." };
     }
+
+    // Send welcome email (non-blocking, skip if not configured)
+    void sendWelcomeEmail(parsed.data.email, parsed.data.full_name);
   } catch (err) {
     logger.error("signUp error", { error: err instanceof Error ? err.message : "Unknown" });
     return { error: "Errore interno del server" };
@@ -216,6 +225,59 @@ export async function updatePassword(
     return { success: true };
   } catch (err) {
     logger.error("updatePassword error", { error: err instanceof Error ? err.message : "Unknown" });
+    return { error: "Errore interno del server" };
+  }
+}
+
+/**
+ * Change password for authenticated user (requires current password verification).
+ * @param formData - FormData with current_password and new_password
+ * @returns Success or error result
+ */
+export async function changePassword(
+  formData: FormData
+): Promise<{ success: boolean } | { error: string }> {
+  try {
+    const raw = {
+      current_password: formData.get("current_password"),
+      new_password: formData.get("new_password"),
+    };
+
+    const parsed = changePasswordSchema.safeParse(raw);
+    if (!parsed.success) {
+      return { error: parsed.error.issues[0]?.message ?? "Dati non validi" };
+    }
+
+    const supabase = await createClient();
+
+    // Verify current password by attempting sign-in
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user?.email) {
+      return { error: "Utente non autenticato" };
+    }
+
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: parsed.data.current_password,
+    });
+
+    if (signInError) {
+      return { error: "La password attuale non è corretta" };
+    }
+
+    // Update to new password
+    const { error } = await supabase.auth.updateUser({
+      password: parsed.data.new_password,
+    });
+
+    if (error) {
+      logger.error("Change password failed", { error: error.message });
+      return { error: "Errore nel cambio password" };
+    }
+
+    return { success: true };
+  } catch (err) {
+    logger.error("changePassword error", { error: err instanceof Error ? err.message : "Unknown" });
     return { error: "Errore interno del server" };
   }
 }

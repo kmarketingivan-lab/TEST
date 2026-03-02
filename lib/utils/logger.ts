@@ -10,6 +10,13 @@ interface LogEntry {
 /**
  * Structured logger — replacement for console.log throughout the codebase.
  * Outputs JSON-structured log entries for easier parsing in production.
+ *
+ * Sentry integration (when ready):
+ * 1. npm install @sentry/nextjs
+ * 2. Run `npx @sentry/wizard@latest -i nextjs`
+ * 3. In the error() method below, add: Sentry.captureException(data?.error ?? message)
+ * 4. In the warn() method, optionally add: Sentry.captureMessage(message, "warning")
+ * 5. Configure sentry.client.config.ts and sentry.server.config.ts
  */
 export const logger = {
   /**

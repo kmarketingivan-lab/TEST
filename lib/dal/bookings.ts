@@ -156,6 +156,71 @@ export async function getBookingServices(): Promise<BookingService[]> {
   return (data ?? []) as BookingService[];
 }
 
+/** Booking with joined service name. */
+export type BookingWithService = Booking & {
+  booking_services: { name: string } | null;
+};
+
+/**
+ * Cancel a booking. Checks ownership and that booking is at least 24h away.
+ */
+export async function cancelBooking(
+  bookingId: string,
+  userId: string
+): Promise<void> {
+  const supabase = await createClient();
+
+  // Fetch the booking
+  const { data: booking, error: fetchError } = await supabase
+    .from("bookings")
+    .select("*")
+    .eq("id", bookingId)
+    .single();
+
+  if (fetchError) throw fetchError;
+
+  const b = booking as Booking;
+
+  // Check ownership
+  if (b.user_id !== userId) {
+    throw new Error("Non autorizzato a cancellare questa prenotazione");
+  }
+
+  // Check 24h before
+  const bookingDateTime = new Date(`${b.booking_date}T${b.start_time}`);
+  const now = new Date();
+  const hoursUntil = (bookingDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+  if (hoursUntil < 24) {
+    throw new Error("La cancellazione è possibile solo fino a 24 ore prima");
+  }
+
+  const { error } = await supabase
+    .from("bookings")
+    .update({ status: "cancelled" })
+    .eq("id", bookingId);
+
+  if (error) throw error;
+}
+
+/**
+ * Get a user's bookings with service name joined.
+ */
+export async function getUserBookingsWithService(
+  userId: string
+): Promise<BookingWithService[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("bookings")
+    .select("*, booking_services(name)")
+    .eq("user_id", userId)
+    .order("booking_date", { ascending: false });
+
+  if (error) throw error;
+  return (data ?? []) as unknown as BookingWithService[];
+}
+
 /** Convert HH:MM to minutes from midnight */
 function timeToMinutes(time: string): number {
   const [h, m] = time.split(":").map(Number);

@@ -25,14 +25,14 @@ const icons: Record<ToastType, React.ReactNode> = {
   success: <CheckCircle className="h-5 w-5 text-green-500" />,
   error: <AlertCircle className="h-5 w-5 text-red-500" />,
   warning: <AlertTriangle className="h-5 w-5 text-yellow-500" />,
-  info: <Info className="h-5 w-5 text-red-500" />,
+  info: <Info className="h-5 w-5 text-blue-500" />,
 };
 
 const bgColors: Record<ToastType, string> = {
   success: "bg-green-50 border-green-200",
   error: "bg-red-50 border-red-200",
   warning: "bg-yellow-50 border-yellow-200",
-  info: "bg-red-50 border-red-500",
+  info: "bg-blue-50 border-blue-200",
 };
 
 /** Props for the ToastProvider component */
@@ -54,18 +54,26 @@ function ToastProvider({ children }: ToastProviderProps) {
   const addToast = useCallback((type: ToastType, message: string) => {
     const id = `toast-${++toastCounter}`;
     setToasts((prev) => [...prev, { id, type, message }]);
-    setTimeout(() => removeToast(id), 5000);
+    setTimeout(() => removeToast(id), 4000);
   }, [removeToast]);
 
   return (
     <ToastContext.Provider value={{ toasts, addToast, removeToast }}>
       {children}
+      {/* Keyframes for slide-in animation */}
+      <style>{`
+        @keyframes slide-in-right {
+          from { transform: translateX(100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+      `}</style>
       {/* Toast stack */}
       <div className="fixed top-4 right-4 z-50 flex flex-col gap-2" aria-live="polite">
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className={`flex items-center gap-3 rounded-lg border px-4 py-3 shadow-md transition-all ${bgColors[toast.type]}`}
+            className={`flex items-center gap-3 rounded-lg border px-4 py-3 shadow-md animate-slide-in-right ${bgColors[toast.type]}`}
+            style={{ animation: "slide-in-right 0.3s ease-out" }}
           >
             {icons[toast.type]}
             <p className="text-sm text-gray-800">{toast.message}</p>

@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl:*)",
+      "Bash(netstat:*)",
+      "Bash(npm run:*)",
+      "Bash(grep:*)",
+      "Bash(done)",
+      "Bash(rm:*)",
+      "Bash(taskkill:*)",
+      "Bash(head:*)",
+      "Bash(find C:\\\\Users\\\\cresc\\\\Projects\\\\my-ecommerce-v2\\\\app\\\\\\(admin\\)\\\\admin\\\\reviews:*)",
+      "Bash(npx supabase:*)",
+      "Bash(PGPASSWORD=postgres psql:*)",
+      "Bash(docker ps:*)",
+      "Bash(docker exec:*)"
+    ]
+  }
+}

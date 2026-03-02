@@ -3,7 +3,10 @@ import { getOrderStats } from "@/lib/dal/orders";
 import { getProducts } from "@/lib/dal/products";
 import { getOrders } from "@/lib/dal/orders";
 import { getBookings } from "@/lib/dal/bookings";
+import { getRevenueByDay, getOrdersByStatus, getTopProducts } from "@/lib/dal/analytics";
 import { Badge, getStatusVariant } from "@/components/ui/badge";
+import { SalesChart } from "@/components/admin/sales-chart";
+import { LowStockAlert } from "@/components/admin/low-stock-alert";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import Link from "next/link";
@@ -13,15 +16,57 @@ import {
   CalendarCheck,
   TrendingUp,
 } from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
+import type { Product } from "@/types/database";
+
+async function getLowStockProducts(): Promise<Product[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select("*")
+    .gt("stock_quantity", 0)
+    .or("low_stock_threshold.is.null,stock_quantity.lte.low_stock_threshold")
+    .eq("is_active", true)
+    .order("stock_quantity", { ascending: true })
+    .limit(20);
+
+  if (error) {
+    // Fallback: fetch products with stock <= 5
+    const { data: fallback } = await supabase
+      .from("products")
+      .select("*")
+      .gt("stock_quantity", 0)
+      .lte("stock_quantity", 5)
+      .eq("is_active", true)
+      .order("stock_quantity", { ascending: true })
+      .limit(20);
+    return (fallback ?? []) as Product[];
+  }
+
+  return (data ?? []) as Product[];
+}
 
 export default async function AdminDashboardPage() {
   await requireAdmin();
 
-  const [orderStats, productsResult, ordersResult, bookingsResult] = await Promise.all([
+  const [
+    orderStats,
+    productsResult,
+    ordersResult,
+    bookingsResult,
+    revenueData,
+    statusData,
+    topProducts,
+    lowStockProducts,
+  ] = await Promise.all([
     getOrderStats(),
     getProducts({ isActive: true, perPage: 1 }),
     getOrders({ perPage: 5 }),
     getBookings({ perPage: 5 }),
+    getRevenueByDay(30),
+    getOrdersByStatus(),
+    getTopProducts(5),
+    getLowStockProducts(),
   ]);
 
   const totalOrders = Object.values(orderStats).reduce((sum, count) => sum + count, 0);
@@ -61,21 +106,29 @@ export default async function AdminDashboardPage() {
         />
       </div>
 
-      {/* Order stats by status */}
-      <div className="rounded-lg border border-gray-200 bg-white p-6">
-        <h2 className="mb-4 text-lg font-semibold text-gray-900">Ordini per stato</h2>
-        <div className="flex flex-wrap gap-3">
-          {Object.entries(orderStats).map(([status, count]) => (
-            <div key={status} className="flex items-center gap-2">
-              <Badge variant={getStatusVariant(status)}>{status}</Badge>
-              <span className="text-sm font-medium text-gray-700">{count}</span>
-            </div>
-          ))}
-          {Object.keys(orderStats).length === 0 && (
-            <p className="text-sm text-gray-500">Nessun ordine ancora</p>
-          )}
+      {/* Sales charts (H01) */}
+      <SalesChart revenueData={revenueData} statusData={statusData} />
+
+      {/* Low stock alerts (H02) */}
+      <LowStockAlert products={lowStockProducts} />
+
+      {/* Top products */}
+      {topProducts.length > 0 && (
+        <div className="rounded-lg border border-gray-200 bg-white p-6">
+          <h2 className="mb-4 text-lg font-semibold text-gray-900">Prodotti più venduti</h2>
+          <div className="space-y-2">
+            {topProducts.map((tp) => (
+              <div key={tp.product_name} className="flex items-center justify-between rounded-md p-2 hover:bg-gray-50">
+                <div>
+                  <p className="text-sm font-medium text-gray-900">{tp.product_name}</p>
+                  <p className="text-xs text-gray-500">{tp.total_quantity} venduti</p>
+                </div>
+                <p className="text-sm font-medium text-gray-700">€{tp.total_revenue.toFixed(2)}</p>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Recent orders */}

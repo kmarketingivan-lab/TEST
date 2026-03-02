@@ -52,10 +52,19 @@ export async function createProduct(
       return { error: parsed.error.issues[0]?.message ?? "Dati non validi" };
     }
 
+    // H12: Extra fields (specifications, regulatory_info, brand_id)
+    const extra: Record<string, unknown> = {};
+    const specsStr = formData.get("specifications");
+    if (specsStr) {
+      try { extra.specifications = JSON.parse(String(specsStr)); } catch { /* skip */ }
+    }
+    if (formData.has("regulatory_info")) extra.regulatory_info = formData.get("regulatory_info") || null;
+    if (formData.get("brand_id")) extra.brand_id = formData.get("brand_id");
+
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("products")
-      .insert(stripUndefined(parsed.data))
+      .insert({ ...stripUndefined(parsed.data), ...extra })
       .select("id")
       .single();
 
@@ -117,6 +126,15 @@ export async function updateProduct(
       return { error: parsed.error.issues[0]?.message ?? "Dati non validi" };
     }
 
+    // H12: Extra fields (specifications, regulatory_info, brand_id)
+    const extra: Record<string, unknown> = {};
+    const specsStr = formData.get("specifications");
+    if (specsStr) {
+      try { extra.specifications = JSON.parse(String(specsStr)); } catch { /* skip */ }
+    }
+    if (formData.has("regulatory_info")) extra.regulatory_info = formData.get("regulatory_info") || null;
+    if (formData.has("brand_id")) extra.brand_id = formData.get("brand_id") || null;
+
     const supabase = await createClient();
 
     // Get old values for audit diff
@@ -128,7 +146,7 @@ export async function updateProduct(
 
     const { error } = await supabase
       .from("products")
-      .update(stripUndefined(parsed.data))
+      .update({ ...stripUndefined(parsed.data), ...extra })
       .eq("id", id);
 
     if (error) {
@@ -294,6 +312,65 @@ export async function reorderProductImages(
     return { success: true };
   } catch (err) {
     logger.error("reorderProductImages error", { error: err instanceof Error ? err.message : "Unknown" });
+    return { error: "Errore interno del server" };
+  }
+}
+
+/**
+ * Bulk update products (activate/deactivate).
+ */
+export async function bulkUpdateProducts(
+  ids: string[],
+  isActive: boolean
+): Promise<{ success: boolean } | { error: string }> {
+  try {
+    const admin = await requireAdmin();
+    const supabase = await createClient();
+
+    const { error } = await supabase
+      .from("products")
+      .update({ is_active: isActive })
+      .in("id", ids);
+
+    if (error) {
+      logger.error("Failed to bulk update products", { error: error.message });
+      return { error: "Errore nell'aggiornamento massivo" };
+    }
+
+    await logAuditEvent(admin.id, "bulk_update", "products", "bulk", undefined, { ids, is_active: isActive });
+    revalidatePath("/admin/products");
+    return { success: true };
+  } catch (err) {
+    logger.error("bulkUpdateProducts error", { error: err instanceof Error ? err.message : "Unknown" });
+    return { error: "Errore interno del server" };
+  }
+}
+
+/**
+ * Bulk delete products (soft delete).
+ */
+export async function bulkDeleteProducts(
+  ids: string[]
+): Promise<{ success: boolean } | { error: string }> {
+  try {
+    const admin = await requireAdmin();
+    const supabase = await createClient();
+
+    const { error } = await supabase
+      .from("products")
+      .update({ is_active: false })
+      .in("id", ids);
+
+    if (error) {
+      logger.error("Failed to bulk delete products", { error: error.message });
+      return { error: "Errore nell'eliminazione massiva" };
+    }
+
+    await logAuditEvent(admin.id, "bulk_delete", "products", "bulk", undefined, { ids });
+    revalidatePath("/admin/products");
+    return { success: true };
+  } catch (err) {
+    logger.error("bulkDeleteProducts error", { error: err instanceof Error ? err.message : "Unknown" });
     return { error: "Errore interno del server" };
   }
 }

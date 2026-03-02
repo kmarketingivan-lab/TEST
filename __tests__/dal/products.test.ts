@@ -100,7 +100,7 @@ describe("DAL Products", () => {
       mockFrom.mockReturnValue(proxy);
       const result = await getProductBySlug("product-1");
       expect(mockFrom).toHaveBeenCalledWith("products");
-      expect(mock.select).toHaveBeenCalledWith("*, product_images(*), product_variants(*)");
+      expect(mock.select).toHaveBeenCalledWith("*, product_images(*), product_variants(*), brands(id,name,slug,logo_url)");
       expect(result).toBeTruthy();
     });
 

@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
-import { toggleProductActive, deleteProduct } from "./actions";
+import { BulkActions } from "@/components/admin/bulk-actions";
+import { toggleProductActive, deleteProduct, bulkUpdateProducts, bulkDeleteProducts } from "./actions";
 import type { Product, Category } from "@/types/database";
 
 interface ProductsTableProps {
@@ -22,7 +23,7 @@ interface ProductsTableProps {
 type ProductRow = Product & Record<string, unknown>;
 
 /**
- * Client component for the products list with DataTable, search, category filter, and actions.
+ * Client component for the products list with DataTable, search, category filter, bulk actions and actions.
  */
 function ProductsTable({
   products,
@@ -38,6 +39,7 @@ function ProductsTable({
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [searchValue, setSearchValue] = useState(currentSearch ?? "");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const updateParams = useCallback(
     (key: string, value: string | null) => {
@@ -83,6 +85,27 @@ function ProductsTable({
       router.refresh();
     }
   }, [deleteId, addToast, router]);
+
+  const handleBulkAction = useCallback(
+    async (action: "activate" | "deactivate" | "delete", ids: string[]) => {
+      let result: { success: boolean } | { error: string };
+      if (action === "activate") {
+        result = await bulkUpdateProducts(ids, true);
+      } else if (action === "deactivate") {
+        result = await bulkUpdateProducts(ids, false);
+      } else {
+        result = await bulkDeleteProducts(ids);
+      }
+      if ("error" in result) {
+        addToast("error", result.error);
+      } else {
+        addToast("success", "Operazione completata");
+        setSelectedIds([]);
+        router.refresh();
+      }
+    },
+    [addToast, router]
+  );
 
   const columns: DataTableColumn<ProductRow>[] = [
     {
@@ -174,11 +197,16 @@ function ProductsTable({
         </select>
       </div>
 
+      {/* Bulk actions bar */}
+      <BulkActions selectedIds={selectedIds} onBulkAction={handleBulkAction} />
+
       <DataTable<ProductRow>
         data={products as ProductRow[]}
         columns={columns}
         rowKey="id"
         actions={actions}
+        selectable
+        onSelectionChange={setSelectedIds}
         page={page}
         perPage={20}
         totalCount={totalCount}

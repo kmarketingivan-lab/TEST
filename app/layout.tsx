@@ -8,7 +8,7 @@ const inter = Inter({ subsets: ["latin"], display: "swap" });
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
 
 export const metadata: Metadata = {
-  ...(siteUrl ? { metadataBase: new URL(siteUrl) } : {}),
+  metadataBase: new URL(siteUrl || "https://armeriapalmetto.it"),
   title: {
     default: "Armeria Palmetto",
     template: "%s | Armeria Palmetto",
@@ -21,6 +21,20 @@ export const metadata: Metadata = {
       "Armeria Palmetto — Vendita armi, munizioni, fuochi artificiali a Brescia",
     locale: "it_IT",
     type: "website",
+    images: [
+      {
+        url: "/og-default.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Armeria Palmetto",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Armeria Palmetto",
+    description:
+      "Armeria Palmetto — Vendita armi, munizioni, fuochi artificiali a Brescia",
   },
 };
 

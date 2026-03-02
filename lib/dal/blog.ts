@@ -65,14 +65,38 @@ export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
 }
 
 /**
- * Get published posts with pagination.
- * @param options - Pagination options
- * @returns Paginated published posts
+ * Get published posts with pagination, optional tag and search filters.
  */
 export async function getPublishedPosts(
-  options: { page?: number; perPage?: number } = {}
+  options: { page?: number; perPage?: number; tag?: string; search?: string } = {}
 ): Promise<PaginatedPosts> {
-  return getPosts({ ...options, isPublished: true });
+  const { page = 1, perPage = 20, tag, search } = options;
+  const supabase = await createClient();
+  const from = (page - 1) * perPage;
+  const to = from + perPage - 1;
+
+  let query = supabase
+    .from("blog_posts")
+    .select("*", { count: "exact" })
+    .eq("is_published", true);
+
+  if (tag) {
+    query = query.contains("tags", [tag]);
+  }
+
+  if (search) {
+    query = query.or(`title.ilike.%${search}%,excerpt.ilike.%${search}%`);
+  }
+
+  query = query.order("published_at", { ascending: false }).range(from, to);
+
+  const { data, count, error } = await query;
+  if (error) throw error;
+
+  return {
+    data: (data ?? []) as BlogPost[],
+    count: count ?? 0,
+  };
 }
 
 /**
@@ -88,6 +112,59 @@ export async function getPostsByTag(tag: string): Promise<BlogPost[]> {
     .eq("is_published", true)
     .contains("tags", [tag])
     .order("published_at", { ascending: false });
+
+  if (error) throw error;
+  return (data ?? []) as BlogPost[];
+}
+
+/**
+ * Atomically increment view count for a blog post via RPC.
+ */
+export async function incrementViews(postId: string): Promise<void> {
+  const supabase = await createClient();
+
+  const { error } = await supabase.rpc("increment_blog_views", {
+    p_post_id: postId,
+  });
+
+  if (error) throw error;
+}
+
+/**
+ * Get related posts based on shared tags.
+ */
+export async function getRelatedPosts(
+  postId: string,
+  tags: string[],
+  limit = 3
+): Promise<BlogPost[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("blog_posts")
+    .select("*")
+    .eq("is_published", true)
+    .neq("id", postId)
+    .overlaps("tags", tags)
+    .order("published_at", { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return (data ?? []) as BlogPost[];
+}
+
+/**
+ * Get popular posts ordered by views_count descending.
+ */
+export async function getPopularPosts(limit = 5): Promise<BlogPost[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("blog_posts")
+    .select("*")
+    .eq("is_published", true)
+    .order("views_count", { ascending: false })
+    .limit(limit);
 
   if (error) throw error;
   return (data ?? []) as BlogPost[];

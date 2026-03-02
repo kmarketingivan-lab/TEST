@@ -2,6 +2,7 @@ import { requireAdmin } from "@/lib/auth/helpers";
 import { getProducts } from "@/lib/dal/products";
 import { getCategories } from "@/lib/dal/categories";
 import { ProductsTable } from "./products-table";
+import { ExportButton } from "@/components/admin/export-button";
 import Link from "next/link";
 
 interface PageProps {
@@ -29,12 +30,15 @@ export default async function AdminProductsPage({ searchParams }: PageProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Prodotti</h1>
-        <Link
-          href="/admin/products/new"
-          className="inline-flex items-center rounded-md bg-red-700 px-4 py-2 text-sm font-medium text-white hover:bg-red-800"
-        >
-          Nuovo prodotto
-        </Link>
+        <div className="flex items-center gap-3">
+          <ExportButton exportUrl="/api/admin/export/products" label="Esporta CSV" />
+          <Link
+            href="/admin/products/new"
+            className="inline-flex items-center rounded-md bg-red-700 px-4 py-2 text-sm font-medium text-white hover:bg-red-800"
+          >
+            Nuovo prodotto
+          </Link>
+        </div>
       </div>
 
       <ProductsTable

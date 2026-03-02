@@ -22,18 +22,12 @@ vi.mock("@/lib/utils/audit", () => ({
   logAuditEvent: vi.fn(),
 }));
 
-// Mock Supabase
-const mockSelectProducts = vi.fn();
-const mockSelectOrders = vi.fn();
-const mockInsertOrder = vi.fn();
-const mockInsertItems = vi.fn();
-const mockUpdateStock = vi.fn();
-
-const mockFrom = vi.fn();
+// Mock Supabase with rpc support
+const mockRpc = vi.fn();
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(async () => ({
-    from: mockFrom,
+    rpc: mockRpc,
   })),
 }));
 
@@ -76,69 +70,10 @@ describe("Checkout — createOrder", () => {
 
     mockClearCart.mockResolvedValue(undefined);
 
-    // Mock Supabase from() calls
-    let fromCallCount = 0;
-    mockFrom.mockImplementation((table: string) => {
-      fromCallCount++;
-      if (table === "products" && fromCallCount <= 2) {
-        // Stock check
-        return {
-          select: vi.fn(() => ({
-            eq: vi.fn(() => ({
-              single: vi.fn(() =>
-                Promise.resolve({
-                  data: { stock_quantity: 10, name: "Product 1" },
-                  error: null,
-                })
-              ),
-            })),
-          })),
-        };
-      }
-      if (table === "orders" && fromCallCount <= 3) {
-        // Count query
-        return {
-          select: vi.fn(() =>
-            Promise.resolve({ count: 5, error: null })
-          ),
-        };
-      }
-      if (table === "orders") {
-        // Insert order
-        return {
-          insert: vi.fn(() => ({
-            select: vi.fn(() => ({
-              single: vi.fn(() =>
-                Promise.resolve({
-                  data: { id: "order-1" },
-                  error: null,
-                })
-              ),
-            })),
-          })),
-        };
-      }
-      if (table === "order_items") {
-        return {
-          insert: vi.fn(() => Promise.resolve({ error: null })),
-        };
-      }
-      // Stock update (products again)
-      return {
-        select: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            single: vi.fn(() =>
-              Promise.resolve({
-                data: { stock_quantity: 10 },
-                error: null,
-              })
-            ),
-          })),
-        })),
-        update: vi.fn(() => ({
-          eq: vi.fn(() => Promise.resolve({ error: null })),
-        })),
-      };
+    // Default: RPC succeeds
+    mockRpc.mockResolvedValue({
+      data: { order_id: "order-1", order_number: "ORD-001000" },
+      error: null,
     });
   });
 
@@ -163,28 +98,18 @@ describe("Checkout — createOrder", () => {
   });
 
   it("should return error when stock is insufficient", async () => {
-    mockFrom.mockImplementation((table: string) => {
-      if (table === "products") {
-        return {
-          select: vi.fn(() => ({
-            eq: vi.fn(() => ({
-              single: vi.fn(() =>
-                Promise.resolve({
-                  data: { stock_quantity: 1, name: "Product 1" },
-                  error: null,
-                })
-              ),
-            })),
-          })),
-        };
-      }
-      return { select: vi.fn(() => Promise.resolve({ count: 0, error: null })) };
+    mockRpc.mockResolvedValue({
+      data: null,
+      error: {
+        message: "Insufficient stock for product p1: available 1, requested 2",
+        code: "P0001",
+      },
     });
 
     const result = await createOrder(validFormData);
     expect("error" in result).toBe(true);
     if ("error" in result) {
-      expect(result.error).toContain("Stock insufficiente");
+      expect(result.error).toContain("stock sufficiente");
     }
   });
 
@@ -199,5 +124,34 @@ describe("Checkout — createOrder", () => {
 
     const result = await createOrder(fd);
     expect("error" in result).toBe(true);
+  });
+
+  it("should create order successfully via atomic RPC", async () => {
+    const result = await createOrder(validFormData);
+    expect(result).toEqual({ success: true, orderNumber: "ORD-001000" });
+    expect(mockRpc).toHaveBeenCalledWith("create_order_atomic", {
+      p_params: expect.objectContaining({
+        email: "buyer@test.com",
+        status: "pending",
+        total: 61,
+        items: expect.arrayContaining([
+          expect.objectContaining({
+            product_id: "p1",
+            quantity: 2,
+          }),
+        ]),
+      }),
+    });
+    expect(mockClearCart).toHaveBeenCalled();
+  });
+
+  it("should return generic error when RPC fails", async () => {
+    mockRpc.mockResolvedValue({
+      data: null,
+      error: { message: "Internal server error", code: "XX000" },
+    });
+
+    const result = await createOrder(validFormData);
+    expect(result).toEqual({ error: "Errore nella creazione dell'ordine" });
   });
 });

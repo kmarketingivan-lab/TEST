@@ -42,16 +42,20 @@ export default async function CartPage() {
             <span>Subtotale</span>
             <span>{formatPrice(totals.subtotal)}</span>
           </div>
+          {(totals.discount ?? 0) > 0 && (
+            <div className="flex justify-between text-sm text-green-600">
+              <span>Sconto{totals.couponLabel ? ` (${totals.couponLabel})` : ""}</span>
+              <span>-{formatPrice(totals.discount ?? 0)}</span>
+            </div>
+          )}
           <div className="flex justify-between text-sm text-gray-600">
             <span>IVA</span>
             <span>{formatPrice(totals.tax)}</span>
           </div>
-          {totals.shipping > 0 && (
-            <div className="flex justify-between text-sm text-gray-600">
-              <span>Spedizione</span>
-              <span>{formatPrice(totals.shipping)}</span>
-            </div>
-          )}
+          <div className="flex justify-between text-sm text-gray-600">
+            <span>Spedizione</span>
+            <span>{totals.shipping > 0 ? formatPrice(totals.shipping) : "Gratuita"}</span>
+          </div>
           <div className="border-t border-gray-200 pt-3">
             <div className="flex justify-between text-lg font-bold text-gray-900">
               <span>Totale</span>

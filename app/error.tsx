@@ -1,11 +1,19 @@
 "use client";
 
+import { useEffect } from "react";
+
 export default function GlobalError({
+  error,
   reset,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  useEffect(() => {
+    // Log the error client-side for debugging
+    // When Sentry is configured, replace with: Sentry.captureException(error)
+    console.error("[GlobalError]", error.message, error.digest);
+  }, [error]);
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">
       <h2 className="text-3xl font-bold text-neutral-900">Si è verificato un errore</h2>

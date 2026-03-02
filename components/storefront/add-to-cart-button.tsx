@@ -9,15 +9,15 @@ interface AddToCartButtonProps {
   productId: string;
   variantId: string | null;
   quantity: number;
+  disabled?: boolean | undefined;
 }
 
-/**
- * Add-to-cart button with loading state and toast feedback.
- */
-function AddToCartButton({ productId, variantId, quantity }: AddToCartButtonProps) {
+function AddToCartButton({ productId, variantId, quantity, disabled }: AddToCartButtonProps) {
   const [loading, setLoading] = useState(false);
   const { addToast } = useToast();
   const router = useRouter();
+
+  const isDisabled = disabled ?? false;
 
   const handleClick = useCallback(async () => {
     setLoading(true);
@@ -26,7 +26,7 @@ function AddToCartButton({ productId, variantId, quantity }: AddToCartButtonProp
     if ("error" in result) {
       addToast("error", result.error);
     } else {
-      addToast("success", "Aggiunto al carrello");
+      addToast("success", "Prodotto aggiunto al carrello");
       router.refresh();
     }
   }, [productId, variantId, quantity, addToast, router]);
@@ -35,7 +35,7 @@ function AddToCartButton({ productId, variantId, quantity }: AddToCartButtonProp
     <button
       type="button"
       onClick={() => void handleClick()}
-      disabled={loading}
+      disabled={loading || isDisabled}
       className="inline-flex items-center justify-center rounded-full bg-red-700 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-50"
     >
       {loading ? (
@@ -46,6 +46,8 @@ function AddToCartButton({ productId, variantId, quantity }: AddToCartButtonProp
           </svg>
           Aggiunta...
         </>
+      ) : isDisabled ? (
+        "Esaurito"
       ) : (
         "Aggiungi al carrello"
       )}
