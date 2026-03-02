@@ -57,7 +57,9 @@ export function generateBookingConfirmationHtml(data: BookingConfirmationData): 
             <h3 style="margin:0 0 8px;font-size:14px;color:#111827;">Indirizzo negozio</h3>
             <p style="margin:0 0 24px;font-size:14px;color:#374151;line-height:1.6;">
               Armeria Palmetto<br/>
-              Brescia, Italia
+              Via Oberdan 70, 25121 Brescia (BS)<br/>
+              Tel: +39 030 370 0800<br/>
+              Lun-Ven 9:00-13:00 / 15:00-19:00 | Sab 9:00-13:00
             </p>
 
             <div style="text-align:center;">

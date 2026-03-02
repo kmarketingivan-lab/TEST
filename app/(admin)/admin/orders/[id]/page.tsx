@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { OrderActions } from "./order-actions";
+import { PickupInfo } from "./pickup-info";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -100,6 +101,16 @@ export default async function OrderDetailPage({ params }: PageProps) {
           </tbody>
         </table>
       </div>
+
+      {/* Pickup compliance info */}
+      {order.requires_pickup && (
+        <PickupInfo
+          orderId={order.id}
+          pickupDocumentType={order.pickup_document_type}
+          pickupDocumentNumber={order.pickup_document_number}
+          pickupDocumentVerified={order.pickup_document_verified ?? false}
+        />
+      )}
 
       {/* Actions */}
       <OrderActions orderId={order.id} currentStatus={order.status} notes={order.notes} />

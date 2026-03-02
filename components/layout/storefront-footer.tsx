@@ -23,7 +23,7 @@ function StorefrontFooter({ siteName, contactEmail, contactPhone }: StorefrontFo
             <div className="mt-3 space-y-2 text-sm text-neutral-400">
               <div className="flex items-start gap-2">
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-neutral-500" />
-                <span>Via Roma 123, 00100 Roma (RM)</span>
+                <span>Via Oberdan 70, 25121 Brescia (BS)</span>
               </div>
               <div className="flex items-start gap-2">
                 <Clock className="mt-0.5 h-4 w-4 shrink-0 text-neutral-500" />

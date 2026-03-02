@@ -32,10 +32,16 @@ const checkoutLimiter = redis
   ? new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(3, "60 s") })
   : null;
 
+// Media upload: 5 req / 60s per IP
+const mediaLimiter = redis
+  ? new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(5, "60 s") })
+  : null;
+
 const limiters = {
   default: defaultLimiter,
   auth: authLimiter,
   checkout: checkoutLimiter,
+  media: mediaLimiter,
 } as const;
 
 type LimiterPreset = keyof typeof limiters;

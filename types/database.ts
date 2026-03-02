@@ -91,6 +91,7 @@ export type Database = {
           specifications: Record<string, unknown>;
           regulatory_info: string | null;
           weight_class: string | null;
+          product_type: string;
           is_active: boolean;
           is_featured: boolean;
           seo_title: string | null;
@@ -117,6 +118,7 @@ export type Database = {
           specifications?: Record<string, unknown>;
           regulatory_info?: string | null;
           weight_class?: string | null;
+          product_type?: string;
           is_active?: boolean;
           is_featured?: boolean;
           seo_title?: string | null;
@@ -140,6 +142,7 @@ export type Database = {
           specifications?: Record<string, unknown>;
           regulatory_info?: string | null;
           weight_class?: string | null;
+          product_type?: string;
           is_active?: boolean;
           is_featured?: boolean;
           seo_title?: string | null;
@@ -254,6 +257,11 @@ export type Database = {
           coupon_code: string | null;
           coupon_discount: number;
           invoice_number: string | null;
+          requires_pickup: boolean;
+          pickup_document_type: string | null;
+          pickup_document_number: string | null;
+          pickup_document_verified: boolean;
+          pickup_notes: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -276,6 +284,11 @@ export type Database = {
           coupon_code?: string | null;
           coupon_discount?: number;
           invoice_number?: string | null;
+          requires_pickup?: boolean;
+          pickup_document_type?: string | null;
+          pickup_document_number?: string | null;
+          pickup_document_verified?: boolean;
+          pickup_notes?: string | null;
         };
         Update: {
           order_number?: string;
@@ -295,6 +308,11 @@ export type Database = {
           coupon_code?: string | null;
           coupon_discount?: number;
           invoice_number?: string | null;
+          requires_pickup?: boolean;
+          pickup_document_type?: string | null;
+          pickup_document_number?: string | null;
+          pickup_document_verified?: boolean;
+          pickup_notes?: string | null;
         };
         Relationships: [];
       };

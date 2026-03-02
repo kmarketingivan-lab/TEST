@@ -113,13 +113,13 @@ export default async function HomePage() {
         data={generateLocalBusinessSchema({
           name: "Armeria Palmetto",
           description: "Vendita armi, munizioni, fuochi artificiali a Brescia",
-          phone: "+39 0123 456789",
-          email: "info@myecommerce.it",
+          phone: "+39 030 370 0800",
+          email: "info@armeriapalmetto.it",
           address: {
-            street: "Via Roma 123",
-            city: "Roma",
-            province: "RM",
-            postalCode: "00100",
+            street: "Via Oberdan 70",
+            city: "Brescia",
+            province: "BS",
+            postalCode: "25121",
             country: "IT",
           },
           openingHours: [
@@ -132,8 +132,8 @@ export default async function HomePage() {
       <JsonLdScript
         data={generateOrganizationSchema({
           name: "Armeria Palmetto",
-          email: "info@myecommerce.it",
-          phone: "+39 0123 456789",
+          email: "info@armeriapalmetto.it",
+          phone: "+39 030 370 0800",
         })}
       />
 
@@ -320,7 +320,7 @@ export default async function HomePage() {
                 <div>
                   <p className="font-semibold">Indirizzo</p>
                   <p className="text-sm text-neutral-400">
-                    Via Roma 123, 00100 Roma (RM)
+                    Via Oberdan 70, 25121 Brescia (BS)
                   </p>
                 </div>
               </div>
@@ -341,7 +341,7 @@ export default async function HomePage() {
                 <div>
                   <p className="font-semibold">Telefono</p>
                   <p className="text-sm text-neutral-400">
-                    +39 0123 456789
+                    +39 030 370 0800
                   </p>
                 </div>
               </div>
@@ -350,18 +350,24 @@ export default async function HomePage() {
                 <div>
                   <p className="font-semibold">Email</p>
                   <p className="text-sm text-neutral-400">
-                    info@myecommerce.it
+                    info@armeriapalmetto.it
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Map placeholder */}
-            <div className="flex items-center justify-center rounded-lg bg-neutral-800 min-h-[250px]">
-              <div className="text-center text-neutral-500">
-                <MapPin className="mx-auto h-10 w-10" />
-                <p className="mt-2 text-sm">Google Maps</p>
-              </div>
+            {/* Google Maps */}
+            <div className="overflow-hidden rounded-lg min-h-[250px]">
+              <iframe
+                src="https://maps.google.com/maps?q=Via+Oberdan+70+Brescia+BS+25121&t=&z=16&ie=UTF8&iwloc=&output=embed"
+                width="100%"
+                height="250"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Armeria Palmetto — Via Oberdan 70, Brescia"
+              />
             </div>
           </div>
         </div>

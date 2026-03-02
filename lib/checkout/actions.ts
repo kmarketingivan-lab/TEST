@@ -56,6 +56,28 @@ export async function createOrder(
       return { error: "Il carrello è vuoto" };
     }
 
+    // 2b. Validate shipping country (only IT)
+    const shippingCountryRaw = formData.get("shipping_country") as string | null;
+    if (shippingCountryRaw && shippingCountryRaw.toUpperCase() !== "IT") {
+      return { error: "Le spedizioni sono disponibili solo in Italia" };
+    }
+
+    // 2c. Detect firearms in cart (fail-open: if query fails, no pickup required)
+    const supabase = await createClient();
+    let requiresPickup = false;
+    try {
+      const productIds = [...new Set(cartItems.map((i) => i.productId))];
+      const { data: cartProducts } = await supabase
+        .from("products")
+        .select("id, product_type")
+        .in("id", productIds);
+      requiresPickup = cartProducts?.some(
+        (p) => p.product_type === "arma_fuoco" || p.product_type === "munizioni"
+      ) ?? false;
+    } catch {
+      // Non-critical check; default to no pickup requirement
+    }
+
     // 3. Calculate totals from DB (fresh prices) with coupon and shipping country
     const couponCode = formData.get("coupon_code") as string | null;
     const shippingCountry = (formData.get("shipping_country") as string) || "IT";
@@ -64,7 +86,6 @@ export async function createOrder(
       return { error: "I prodotti nel carrello non sono più disponibili" };
     }
 
-    const supabase = await createClient();
     const currentUser = await getCurrentUser();
     const discount = totals.discount ?? 0;
 
@@ -118,6 +139,20 @@ export async function createOrder(
     const result = rpcResult as { order_id: string; order_number: string };
     const orderNumber = result.order_number;
     const orderId = result.order_id;
+
+    // 5b. Save compliance fields if firearms order
+    if (requiresPickup) {
+      const pickupDocType = formData.get("pickup_document_type") as string | null;
+      const pickupDocNumber = formData.get("pickup_document_number") as string | null;
+      await supabase
+        .from("orders")
+        .update({
+          requires_pickup: true,
+          pickup_document_type: pickupDocType,
+          pickup_document_number: pickupDocNumber,
+        })
+        .eq("id", orderId);
+    }
 
     // 6. Clear cart
     await clearCart();

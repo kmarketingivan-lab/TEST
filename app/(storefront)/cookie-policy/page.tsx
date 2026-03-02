@@ -215,7 +215,7 @@ export default function CookiePolicyPage() {
           </h2>
           <p className="mt-2 leading-relaxed">
             Il Titolare del trattamento è <strong>Armeria Palmetto</strong>,
-            Via Oberdan 70, 25128 Brescia (BS). Per informazioni complete sul
+            Via Oberdan 70, 25121 Brescia (BS). Per informazioni complete sul
             trattamento dei dati personali, si prega di consultare la nostra{" "}
             <a href="/privacy-policy" className="text-red-700 underline">
               Privacy Policy

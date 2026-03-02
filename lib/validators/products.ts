@@ -32,6 +32,7 @@ export const productSchema = z.object({
   low_stock_threshold: z.number().int().nonnegative().default(5),
   weight_grams: z.number().int().nonnegative().nullish(),
   category_id: z.uuid("ID categoria non valido").nullish(),
+  product_type: z.enum(["standard", "arma_fuoco", "munizioni", "fuochi_artificiali", "accessori"]).default("standard"),
   is_active: z.boolean().default(true),
   is_featured: z.boolean().default(false),
   seo_title: z.string().max(70, "Il titolo SEO non può superare 70 caratteri").nullish(),

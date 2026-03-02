@@ -18,7 +18,7 @@ export default async function StorefrontLayout({
     getCategoryTree(),
   ]);
 
-  let siteName = "My Ecommerce";
+  let siteName = "Armeria Palmetto";
   let contactEmail = "";
   let contactPhone = "";
 

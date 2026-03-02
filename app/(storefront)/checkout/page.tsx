@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCart, calculateTotals } from "@/lib/cart/cart";
 import { getCurrentUser } from "@/lib/auth/helpers";
+import { createClient } from "@/lib/supabase/server";
 import { CheckoutForm } from "./checkout-form";
 import { CheckoutButton } from "@/components/storefront/checkout-button";
 
@@ -10,6 +11,20 @@ export default async function CheckoutPage() {
   if (items.length === 0) {
     redirect("/cart");
   }
+
+  const productIds = [...new Set(items.map((i) => i.productId))];
+  const supabase = await createClient();
+  const { data: productTypes } = await supabase
+    .from("products")
+    .select("id, product_type")
+    .in("id", productIds);
+
+  const hasFirearms = productTypes?.some(
+    (p) => p.product_type === "arma_fuoco" || p.product_type === "munizioni"
+  ) ?? false;
+  const hasPyrotechnics = productTypes?.some(
+    (p) => p.product_type === "fuochi_artificiali"
+  ) ?? false;
 
   const [totals, user] = await Promise.all([
     calculateTotals(items),
@@ -30,6 +45,8 @@ export default async function CheckoutPage() {
             userEmail={user?.email ?? ""}
             userName=""
             isLoggedIn={!!user}
+            hasFirearms={hasFirearms}
+            hasPyrotechnics={hasPyrotechnics}
           />
         </div>
 

@@ -7,8 +7,8 @@ interface TopBarProps {
 }
 
 export function TopBar({
-  phone = "+39 0123 456789",
-  email = "info@myecommerce.it",
+  phone = "+39 030 370 0800",
+  email = "info@armeriapalmetto.it",
   promo = "Spedizione gratuita sopra 150\u20AC",
 }: TopBarProps) {
   return (

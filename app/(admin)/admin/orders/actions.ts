@@ -84,6 +84,35 @@ export async function cancelOrder(
 }
 
 /**
+ * Toggle pickup document verified status.
+ * @param id - Order ID
+ * @param verified - New verified state
+ * @returns Success or error result
+ */
+export async function setPickupDocumentVerified(
+  id: string,
+  verified: boolean
+): Promise<{ success: boolean } | { error: string }> {
+  try {
+    const admin = await requireAdmin();
+    const supabase = await createClient();
+    const { error } = await supabase
+      .from("orders")
+      .update({ pickup_document_verified: verified })
+      .eq("id", id);
+    if (error) {
+      return { error: "Errore nell'aggiornamento della verifica documento" };
+    }
+    await logAuditEvent(admin.id, "pickup_doc_verify", "order", id, undefined, { verified });
+    revalidatePath(`/admin/orders/${id}`);
+    return { success: true };
+  } catch (err) {
+    logger.error("setPickupDocumentVerified error", { error: err instanceof Error ? err.message : "Unknown" });
+    return { error: "Errore interno del server" };
+  }
+}
+
+/**
  * Add a note to an order.
  * @param id - Order ID
  * @param note - Note text

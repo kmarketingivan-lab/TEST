@@ -27,11 +27,19 @@ export async function middleware(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
   const isLocal = supabaseUrl.startsWith("http://localhost") || supabaseUrl.startsWith("http://127.0.0.1");
   const cspConnectSrc = isLocal
-    ? `'self' ${supabaseUrl} https://*.supabase.co`
-    : `'self' https://*.supabase.co`;
+    ? `'self' ${supabaseUrl} https://*.supabase.co https://api.stripe.com`
+    : `'self' https://*.supabase.co https://api.stripe.com`;
   response.headers.set(
     "Content-Security-Policy",
-    `default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src ${cspConnectSrc}`
+    [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://js.stripe.com",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: https: blob:",
+      "font-src 'self' data:",
+      `connect-src ${cspConnectSrc}`,
+      "frame-src https://js.stripe.com https://hooks.stripe.com https://maps.google.com",
+    ].join("; ")
   );
 
   // Protect /admin/* routes (except login page)

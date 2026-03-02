@@ -177,12 +177,26 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
             <p className="text-gray-700">{product.description}</p>
           )}
 
+          {/* Age restriction warning for pyrotechnics */}
+          {product.product_type === "fuochi_artificiali" && (
+            <div className="rounded-lg border border-yellow-400 bg-yellow-50 p-4">
+              <p className="text-sm font-semibold text-yellow-800">
+                ⚠️ Vendita riservata a maggiori di 18 anni
+              </p>
+              <p className="mt-1 text-xs text-yellow-700">
+                Confermando l&apos;acquisto dichiari di avere almeno 18 anni e di essere autorizzato
+                all&apos;acquisto di materiale pirotecnico ai sensi del D.Lgs. 123/2015.
+              </p>
+            </div>
+          )}
+
           {/* Client interactive section: variants + quantity + add to cart */}
           <ProductDetailClient
             productId={product.id}
             basePrice={product.price}
             stockQuantity={product.stock_quantity}
             variants={variants}
+            requiresAgeVerification={product.product_type === "fuochi_artificiali"}
           />
 
           {/* Wishlist + Share */}

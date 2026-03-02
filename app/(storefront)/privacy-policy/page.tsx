@@ -23,7 +23,7 @@ export default function PrivacyPolicyPage() {
           <p className="mt-2 leading-relaxed">
             Il Titolare del trattamento dei dati personali è{" "}
             <strong>Armeria Palmetto</strong>, con sede in Via Oberdan 70,
-            25128 Brescia (BS), Italia.
+            25121 Brescia (BS), Italia.
           </p>
           <p className="mt-1 leading-relaxed">
             Email di contatto:{" "}
@@ -269,7 +269,7 @@ export default function PrivacyPolicyPage() {
             >
               privacy@armeriapalmetto.it
             </a>{" "}
-            o presso la sede in Via Oberdan 70, 25128 Brescia (BS).
+            o presso la sede in Via Oberdan 70, 25121 Brescia (BS).
           </p>
         </div>
       </section>

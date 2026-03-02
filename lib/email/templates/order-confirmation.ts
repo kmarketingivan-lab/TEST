@@ -92,7 +92,14 @@ export function generateOrderConfirmationHtml(data: OrderConfirmationData): stri
               </tr>
             </table>
 
-            ${shippingAddress ? `<h3 style="margin:0 0 8px;font-size:14px;color:#111827;">Indirizzo di spedizione</h3>${addressBlock}` : ""}
+            ${order.requires_pickup ? `
+            <div style="background-color:#7f1d1d;color:#ffffff;padding:16px;border-radius:8px;margin:16px 0;">
+              <p style="margin:0 0 8px;font-size:15px;font-weight:700;">RITIRO IN NEGOZIO OBBLIGATORIO</p>
+              <p style="margin:0 0 4px;font-size:13px;">Porta con te il documento abilitativo (${order.pickup_document_type ?? "documento richiesto"}) al momento del ritiro.</p>
+              <p style="margin:0 0 4px;font-size:13px;font-weight:600;">Armeria Palmetto — Via Oberdan 70, 25121 Brescia (BS)</p>
+              <p style="margin:0 0 4px;font-size:13px;">Tel: +39 030 370 0800</p>
+              <p style="margin:0;font-size:13px;">Orari: Lun-Ven 9:00-13:00 / 15:00-19:00 | Sab 9:00-13:00</p>
+            </div>` : `${shippingAddress ? `<h3 style="margin:0 0 8px;font-size:14px;color:#111827;">Indirizzo di spedizione</h3>${addressBlock}` : ""}`}
 
             <div style="text-align:center;margin-top:32px;">
               <a href="${siteUrl}" style="display:inline-block;background-color:#7f1d1d;color:#ffffff;padding:12px 32px;border-radius:6px;text-decoration:none;font-size:14px;font-weight:600;">Visita il sito</a>

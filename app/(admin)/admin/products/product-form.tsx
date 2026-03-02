@@ -64,6 +64,9 @@ function ProductForm({ product, categories, brands = [], action }: ProductFormPr
   // H12: Brand
   const [brandId, setBrandId] = useState(product?.brand_id ?? "");
 
+  // Compliance: product type
+  const [productType, setProductType] = useState(product?.product_type ?? "standard");
+
   const categoryOptions = categories.map((c) => ({ label: c.name, value: c.id }));
   const brandOptions = brands.map((b) => ({ label: b.name, value: b.id }));
 
@@ -105,6 +108,7 @@ function ProductForm({ product, categories, brands = [], action }: ProductFormPr
     // H12: Add regulatory_info and brand_id
     formData.set("regulatory_info", regulatoryInfo);
     formData.set("brand_id", brandId);
+    formData.set("product_type", productType);
 
     const result = await action(formData);
     setLoading(false);
@@ -224,6 +228,25 @@ function ProductForm({ product, categories, brands = [], action }: ProductFormPr
             placeholder="Seleziona categoria"
             defaultValue={product?.category_id ?? ""}
           />
+          {/* Compliance: product type */}
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">Tipo prodotto (normativa)</label>
+            <select
+              value={productType}
+              onChange={(e) => setProductType(e.target.value)}
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+            >
+              <option value="standard">Standard</option>
+              <option value="arma_fuoco">Arma da fuoco</option>
+              <option value="munizioni">Munizioni</option>
+              <option value="fuochi_artificiali">Fuochi artificiali</option>
+              <option value="accessori">Accessori</option>
+            </select>
+            <p className="mt-1 text-xs text-gray-500">
+              Arma da fuoco e Munizioni → ritiro obbligatorio in negozio. Fuochi artificiali → spedizione ADR.
+            </p>
+          </div>
+
           {/* H12: Brand select */}
           {brandOptions.length > 0 && (
             <div>

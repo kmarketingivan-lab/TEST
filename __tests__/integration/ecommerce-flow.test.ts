@@ -50,6 +50,25 @@ function makeFormData(data: Record<string, string>): FormData {
 describe("E-commerce Flow Integration", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default: empty cart so currentItems.find() doesn't crash
+    mockGetCart.mockResolvedValue([]);
+    // Default: sufficient stock for validateStock calls in cart actions
+    mockFrom.mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({ data: { stock_quantity: 100, name: "Product" }, error: null }),
+        }),
+        in: vi.fn().mockResolvedValue({ data: [], error: null }),
+      }),
+      insert: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({ data: { id: "order-1" }, error: null }),
+        }),
+      }),
+      update: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) }),
+    });
+    // Default: successful atomic order creation
+    mockRpc.mockResolvedValue({ data: { order_id: "order-1", order_number: "ORD-001000" }, error: null });
   });
 
   it("should add product to cart", async () => {
@@ -126,15 +145,8 @@ describe("E-commerce Flow Integration", () => {
       };
     });
 
-    // Mock RPCs: generate_order_number then decrement_stock
-    let rpcCallCount = 0;
-    mockRpc.mockImplementation(() => {
-      rpcCallCount++;
-      if (rpcCallCount === 1) {
-        return Promise.resolve({ data: "ORD-001000", error: null });
-      }
-      return Promise.resolve({ data: true, error: null });
-    });
+    // Mock RPC: atomic order creation returns order object
+    mockRpc.mockResolvedValue({ data: { order_id: "order-1", order_number: "ORD-001000" }, error: null });
 
     const fd = makeFormData({
       email: "buyer@test.com",
@@ -187,15 +199,11 @@ describe("E-commerce Flow Integration", () => {
       total: 3050,
     });
 
-    mockFrom.mockImplementation(() => ({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          single: vi.fn(() =>
-            Promise.resolve({ data: { stock_quantity: 5, name: "Widget" }, error: null })
-          ),
-        })),
-      })),
-    }));
+    // Simulate atomic RPC returning stock error
+    mockRpc.mockResolvedValue({
+      data: null,
+      error: { message: "Insufficient stock for product p1: available 5, requested 100", code: "P0001" },
+    });
 
     const fd = makeFormData({
       email: "buyer@test.com",
@@ -208,7 +216,7 @@ describe("E-commerce Flow Integration", () => {
     const result = await createOrder(fd);
     expect("error" in result).toBe(true);
     if ("error" in result) {
-      expect(result.error).toContain("Stock insufficiente");
+      expect(result.error).toContain("stock sufficiente");
     }
   });
 });

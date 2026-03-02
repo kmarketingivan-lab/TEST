@@ -10,9 +10,11 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Log the error client-side for debugging
-    // When Sentry is configured, replace with: Sentry.captureException(error)
-    console.error("[GlobalError]", error.message, error.digest);
+    import("@sentry/nextjs").then((Sentry) => {
+      Sentry.captureException(error);
+    }).catch(() => {
+      console.error("[GlobalError]", error.message, error.digest);
+    });
   }, [error]);
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">

@@ -17,7 +17,10 @@ export const addressSchema = z.object({
   city: z.string().min(1, "Città è obbligatoria"),
   zip: z.string().min(1, "CAP è obbligatorio"),
   province: z.string().nullish(),
-  country: z.string().min(1, "Paese è obbligatorio"),
+  country: z.string().min(1, "Paese è obbligatorio").refine(
+    (val) => val.toUpperCase() === "IT",
+    "Le spedizioni sono disponibili solo in Italia"
+  ),
 });
 
 /**
