@@ -115,17 +115,46 @@ async function handleCheckoutCompleted(
       }
     }
 
-    // Build shipping address from Stripe collected_information
-    const shippingDetails = fullSession.collected_information?.shipping_details;
-    const shippingAddress = shippingDetails?.address
-      ? {
-          street: shippingDetails.address.line1 ?? "",
-          city: shippingDetails.address.city ?? "",
-          zip: shippingDetails.address.postal_code ?? "",
-          province: shippingDetails.address.state ?? null,
-          country: shippingDetails.address.country ?? "IT",
-        }
-      : { street: "", city: "", zip: "", province: null, country: "IT" };
+    // Build shipping address: prefer metadata (form-collected), fall back to Stripe-collected
+    let shippingAddress: { street: string; city: string; zip: string; province: string | null; country: string };
+    const shippingAddrJson = fullSession.metadata?.shipping_address_json;
+    if (shippingAddrJson) {
+      try {
+        shippingAddress = JSON.parse(shippingAddrJson) as typeof shippingAddress;
+      } catch {
+        shippingAddress = { street: "", city: "", zip: "", province: null, country: "IT" };
+      }
+    } else {
+      const shippingDetails = fullSession.collected_information?.shipping_details;
+      shippingAddress = shippingDetails?.address
+        ? {
+            street: shippingDetails.address.line1 ?? "",
+            city: shippingDetails.address.city ?? "",
+            zip: shippingDetails.address.postal_code ?? "",
+            province: shippingDetails.address.state ?? null,
+            country: shippingDetails.address.country ?? "IT",
+          }
+        : { street: "", city: "", zip: "", province: null, country: "IT" };
+    }
+
+    // Billing address from metadata or fallback to shipping
+    let billingAddress = shippingAddress;
+    const billingAddrJson = fullSession.metadata?.billing_address_json;
+    if (billingAddrJson) {
+      try {
+        billingAddress = JSON.parse(billingAddrJson) as typeof billingAddress;
+      } catch { /* fall through */ }
+    }
+
+    // Compliance fields
+    const requiresPickup = fullSession.metadata?.requires_pickup === "true";
+    const pickupDocType = fullSession.metadata?.pickup_document_type || null;
+    const pickupDocNumber = fullSession.metadata?.pickup_document_number || null;
+
+    // Customer info from metadata (form) or Stripe
+    const customerEmail =
+      fullSession.metadata?.customer_email || fullSession.customer_details?.email || "";
+    const customerNotes = fullSession.metadata?.notes || null;
 
     // Calculate totals from Stripe (amounts are in cents)
     const total = (fullSession.amount_total ?? 0) / 100;
@@ -154,7 +183,7 @@ async function handleCheckoutCompleted(
     // --- ATOMIC ORDER CREATION ---
     const rpcParams = {
       user_id: userId || null,
-      email: fullSession.customer_details?.email ?? "",
+      email: customerEmail,
       status: "confirmed",
       subtotal,
       tax,
@@ -162,8 +191,8 @@ async function handleCheckoutCompleted(
       discount,
       total,
       shipping_address: shippingAddress,
-      billing_address: shippingAddress,
-      notes: null,
+      billing_address: billingAddress,
+      notes: customerNotes,
       stripe_payment_intent_id: paymentIntentId,
       coupon_id: null,
       coupon_code: fullSession.metadata?.coupon_code || null,
@@ -196,31 +225,77 @@ async function handleCheckoutCompleted(
     const orderId = result.order_id;
     const orderNumber = result.order_number;
 
-    // Try to send confirmation email
+    // Save compliance fields if firearms/pickup order
+    if (requiresPickup) {
+      await supabase
+        .from("orders")
+        .update({
+          requires_pickup: true,
+          pickup_document_type: pickupDocType,
+          pickup_document_number: pickupDocNumber,
+        })
+        .eq("id", orderId);
+    }
+
+    // Build a shared order object for emails
+    const orderForEmail = {
+      ...rpcParams,
+      id: orderId,
+      order_number: orderNumber,
+      requires_pickup: requiresPickup,
+      pickup_document_type: pickupDocType,
+      pickup_document_number: pickupDocNumber,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    const itemsForEmail = orderItems.map((oi) => ({
+      ...oi,
+      id: "",
+      order_id: orderId,
+      created_at: new Date().toISOString(),
+    }));
+    const customerName = fullSession.metadata?.customer_name || fullSession.customer_details?.name || "";
+    const customerPhone = fullSession.metadata?.customer_phone || "";
+
+    // Send order confirmation to customer
     try {
       const { sendOrderConfirmation } = await import("@/lib/email/send");
-      const orderForEmail = {
-        ...rpcParams,
-        id: orderId,
-        order_number: orderNumber,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
       await sendOrderConfirmation(
         orderForEmail as unknown as Parameters<typeof sendOrderConfirmation>[0],
-        orderItems.map((oi) => ({
-          ...oi,
-          id: "",
-          order_id: orderId,
-          created_at: new Date().toISOString(),
-        })) as Parameters<typeof sendOrderConfirmation>[1],
-        {
-          email: fullSession.customer_details?.email ?? "",
-          name: fullSession.customer_details?.name ?? "",
-        }
+        itemsForEmail as Parameters<typeof sendOrderConfirmation>[1],
+        { email: customerEmail, name: customerName }
       );
     } catch {
       // Email service not available or failed, continue
+    }
+
+    // Send notification to store owner
+    try {
+      const ownerEmail = process.env.OWNER_EMAIL;
+      if (ownerEmail) {
+        const { sendOwnerNotification } = await import("@/lib/email/send");
+        await sendOwnerNotification(
+          orderForEmail as unknown as Parameters<typeof sendOwnerNotification>[0],
+          itemsForEmail as Parameters<typeof sendOwnerNotification>[1],
+          ownerEmail,
+          customerName,
+          customerPhone || undefined
+        );
+      }
+    } catch {
+      // Non-critical
+    }
+
+    // Send WhatsApp notification to store owner
+    try {
+      const { sendWhatsAppNotification } = await import("@/lib/notifications/whatsapp");
+      const city = (shippingAddress as { city?: string }).city ?? "";
+      const waMessage = requiresPickup
+        ? `🔫 Nuovo ordine #${orderNumber} — RITIRO IN NEGOZIO\nCliente: ${customerName}\nTel: ${customerPhone}\nDocumento: ${pickupDocType ?? "—"}\nTotale: €${total.toFixed(2)}`
+        : `🛍️ Nuovo ordine #${orderNumber}\nCliente: ${customerName}\nCittà: ${city}\nTotale: €${total.toFixed(2)}`;
+      await sendWhatsAppNotification(waMessage);
+    } catch {
+      // Non-critical
     }
 
     // Audit log

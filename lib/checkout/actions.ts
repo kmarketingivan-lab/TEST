@@ -12,6 +12,9 @@ import { rateLimitByIp } from "@/lib/utils/rate-limit";
  * Create an order from the current cart.
  * Uses the atomic create_order_atomic RPC which handles:
  * order insert + items insert + stock decrement in one transaction.
+ *
+ * NOTE: This function is for admin/manual orders only.
+ * Storefront checkouts go through /api/stripe/checkout → Stripe webhook.
  */
 export async function createOrder(
   formData: FormData

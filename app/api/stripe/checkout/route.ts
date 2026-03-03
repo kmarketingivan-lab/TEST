@@ -4,7 +4,32 @@ import { getCart, calculateTotals } from "@/lib/cart/cart";
 import { getCurrentUser } from "@/lib/auth/helpers";
 import { headers } from "next/headers";
 
-export async function POST() {
+interface CheckoutBody {
+  email?: string;
+  customer_name?: string;
+  customer_phone?: string | null;
+  notes?: string | null;
+  coupon_code?: string | null;
+  shipping_address?: {
+    street: string;
+    city: string;
+    zip: string;
+    province: string | null;
+    country: string;
+  };
+  billing_address?: {
+    street: string;
+    city: string;
+    zip: string;
+    province: string | null;
+    country: string;
+  };
+  requires_pickup?: boolean;
+  pickup_document_type?: string | null;
+  pickup_document_number?: string | null;
+}
+
+export async function POST(request: Request) {
   try {
     // Graceful degradation: if key is placeholder, return 503
     if (
@@ -17,6 +42,17 @@ export async function POST() {
       );
     }
 
+    // Parse optional JSON body (empty body from CheckoutButton is fine)
+    let body: CheckoutBody = {};
+    try {
+      const contentType = request.headers.get("content-type") ?? "";
+      if (contentType.includes("application/json")) {
+        body = (await request.json()) as CheckoutBody;
+      }
+    } catch {
+      // No body or invalid JSON — proceed without customer data
+    }
+
     const cartItems = await getCart();
     if (cartItems.length === 0) {
       return NextResponse.json(
@@ -25,7 +61,7 @@ export async function POST() {
       );
     }
 
-    const totals = await calculateTotals(cartItems);
+    const totals = await calculateTotals(cartItems, body.coupon_code ?? null);
     if (totals.items.length === 0) {
       return NextResponse.json(
         { error: "I prodotti nel carrello non sono più disponibili" },
@@ -66,14 +102,12 @@ export async function POST() {
       headersList.get("referer")?.replace(/\/[^/]*$/, "") ??
       "http://localhost:3000";
 
-    // Pre-fill email if user is logged in
     const user = await getCurrentUser();
 
     // Build discount coupon for Stripe if applicable
     const discounts: Array<{ coupon: string }> = [];
     const discount = totals.discount ?? 0;
     if (discount > 0) {
-      // Create an ad-hoc Stripe coupon for this session
       const stripeCoupon = await stripe.coupons.create({
         amount_off: Math.round(discount * 100),
         currency: "eur",
@@ -83,22 +117,49 @@ export async function POST() {
       discounts.push({ coupon: stripeCoupon.id });
     }
 
+    // Determine email (form > logged-in user)
+    const customerEmail = body.email ?? user?.email ?? undefined;
+
+    // Build metadata — all values must be strings, max 500 chars each
+    const shippingAddr = body.shipping_address;
+    const billingAddr = body.billing_address ?? shippingAddr;
+    const metadata: Record<string, string> = {
+      user_id: user?.id ?? "",
+      coupon_code: totals.couponCode ?? "",
+      cart_hash: JSON.stringify(
+        cartItems.map((i) => `${i.productId}:${i.variantId ?? ""}:${i.quantity}`)
+      ),
+      customer_email: body.email ?? "",
+      customer_name: (body.customer_name ?? "").slice(0, 500),
+      customer_phone: (body.customer_phone ?? "").slice(0, 100),
+      notes: (body.notes ?? "").slice(0, 500),
+      requires_pickup: body.requires_pickup ? "true" : "false",
+      pickup_document_type: (body.pickup_document_type ?? "").slice(0, 100),
+      pickup_document_number: (body.pickup_document_number ?? "").slice(0, 100),
+    };
+
+    if (shippingAddr) {
+      metadata.shipping_address_json = JSON.stringify(shippingAddr).slice(0, 500);
+    }
+    if (billingAddr) {
+      metadata.billing_address_json = JSON.stringify(billingAddr).slice(0, 500);
+    }
+
+    // Use Stripe's address collection only if we didn't collect the address ourselves
+    const collectShipping = !shippingAddr;
+
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items,
       ...(discounts.length > 0 ? { discounts } : {}),
       success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/cart`,
-      shipping_address_collection: { allowed_countries: ["IT"] },
-      ...(user?.email ? { customer_email: user.email } : {}),
+      ...(collectShipping
+        ? { shipping_address_collection: { allowed_countries: ["IT"] } }
+        : {}),
+      ...(customerEmail ? { customer_email: customerEmail } : {}),
       locale: "it",
-      metadata: {
-        user_id: user?.id ?? "",
-        coupon_code: totals.couponCode ?? "",
-        cart_hash: JSON.stringify(
-          cartItems.map((i) => `${i.productId}:${i.variantId ?? ""}:${i.quantity}`)
-        ),
-      },
+      metadata,
     });
 
     return NextResponse.json(

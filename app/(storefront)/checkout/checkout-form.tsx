@@ -1,13 +1,11 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
-import { createOrder } from "@/lib/checkout/actions";
 import { AddressSelector } from "@/components/storefront/address-selector";
 import type { SavedAddress } from "@/components/storefront/address-selector";
 import { CouponForm } from "@/components/storefront/coupon-form";
@@ -22,15 +20,16 @@ interface CheckoutFormProps {
 }
 
 /**
- * Checkout form with AddressSelector, CouponForm, guest checkout, and notes.
+ * Checkout form — collects customer data and redirects to Stripe.
+ * The actual order is created by the Stripe webhook after payment confirmation.
  */
 function CheckoutForm({ userEmail, userName, savedAddresses, isLoggedIn, hasFirearms = false, hasPyrotechnics = false }: CheckoutFormProps) {
-  const router = useRouter();
   const { addToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [sameBilling, setSameBilling] = useState(true);
   const [couponCode, setCouponCode] = useState<string | null>(null);
   const [couponLabel, setCouponLabel] = useState<string | null>(null);
+  const [pickupDocConfirmed, setPickupDocConfirmed] = useState(false);
 
   const handleCouponApply = useCallback((code: string, label: string) => {
     setCouponCode(code);
@@ -42,36 +41,69 @@ function CheckoutForm({ userEmail, userName, savedAddresses, isLoggedIn, hasFire
     setCouponLabel(null);
   }, []);
 
-  const [pickupDocConfirmed, setPickupDocConfirmed] = useState(false);
-
   const handleSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     const formData = new FormData(e.currentTarget);
 
-    // Attach coupon code if any
-    if (couponCode) {
-      formData.set("coupon_code", couponCode);
-    }
+    // Build address objects from form fields
+    const shippingAddress = {
+      street: (formData.get("shipping_street") as string) || "",
+      city: (formData.get("shipping_city") as string) || "",
+      zip: (formData.get("shipping_zip") as string) || "",
+      province: (formData.get("shipping_province") as string) || null,
+      country: (formData.get("shipping_country") as string) || "IT",
+    };
 
-    // If billing = shipping, remove billing fields so server action skips them
-    if (sameBilling) {
-      formData.delete("billing_street");
-      formData.delete("billing_city");
-      formData.delete("billing_zip");
-      formData.delete("billing_province");
-      formData.delete("billing_country");
-    }
+    const billingAddress = sameBilling ? shippingAddress : {
+      street: (formData.get("billing_street") as string) || "",
+      city: (formData.get("billing_city") as string) || "",
+      zip: (formData.get("billing_zip") as string) || "",
+      province: (formData.get("billing_province") as string) || null,
+      country: (formData.get("billing_country") as string) || "IT",
+    };
 
-    const result = await createOrder(formData);
-    setLoading(false);
+    const body = {
+      email: formData.get("email") as string,
+      customer_name: formData.get("customer_name") as string,
+      customer_phone: (formData.get("customer_phone") as string) || null,
+      notes: (formData.get("notes") as string) || null,
+      coupon_code: couponCode,
+      shipping_address: shippingAddress,
+      billing_address: billingAddress,
+      requires_pickup: hasFirearms,
+      pickup_document_type: (formData.get("pickup_document_type") as string) || null,
+      pickup_document_number: (formData.get("pickup_document_number") as string) || null,
+    };
 
-    if ("error" in result) {
-      addToast("error", result.error);
-    } else {
-      router.push(`/checkout/success?order=${result.orderNumber}`);
+    try {
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      const data = await res.json() as { url?: string; error?: string };
+
+      if (res.status === 503) {
+        addToast("info", "I pagamenti saranno disponibili a breve. Contattaci per ordinare.");
+        setLoading(false);
+        return;
+      }
+
+      if (!res.ok || !data.url) {
+        addToast("error", data.error ?? "Errore durante il checkout");
+        setLoading(false);
+        return;
+      }
+
+      // Redirect to Stripe Checkout (don't setLoading(false) — page is leaving)
+      window.location.href = data.url;
+    } catch {
+      addToast("error", "Errore di connessione");
+      setLoading(false);
     }
-  }, [addToast, router, sameBilling, couponCode]);
+  }, [addToast, sameBilling, couponCode, hasFirearms]);
 
   return (
     <form onSubmit={(e) => void handleSubmit(e)} className="space-y-8">
@@ -111,13 +143,12 @@ function CheckoutForm({ userEmail, userName, savedAddresses, isLoggedIn, hasFire
             <strong>Armeria Palmetto — Via Oberdan 70, 25121 Brescia</strong>, previa esibizione del documento
             abilitativo (porto d&apos;armi o nulla osta del Questore). Non è possibile ricevere spedizioni a domicilio.
           </p>
-          {/* Hidden store address fields sent to server action */}
+          {/* Hidden store address used to build shipping_address object */}
           <input type="hidden" name="shipping_street" value="Via Oberdan 70" />
           <input type="hidden" name="shipping_city" value="Brescia" />
           <input type="hidden" name="shipping_zip" value="25121" />
           <input type="hidden" name="shipping_province" value="BS" />
           <input type="hidden" name="shipping_country" value="IT" />
-          <input type="hidden" name="requires_pickup" value="true" />
         </section>
       )}
 
@@ -234,7 +265,7 @@ function CheckoutForm({ userEmail, userName, savedAddresses, isLoggedIn, hasFire
         disabled={hasFirearms && !pickupDocConfirmed}
         className="w-full"
       >
-        Conferma ordine
+        Paga con Stripe
       </Button>
     </form>
   );

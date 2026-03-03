@@ -20,6 +20,7 @@ import {
   Menu,
   X,
 } from "lucide-react";
+import { PendingOrdersBadge } from "@/components/admin/pending-orders-badge";
 
 interface NavItem {
   label: string;
@@ -113,6 +114,7 @@ function AdminSidebar() {
             >
               {item.icon}
               {item.label}
+              {item.href === "/admin/orders" && <PendingOrdersBadge />}
             </Link>
           ))}
         </div>
